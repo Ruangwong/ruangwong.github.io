@@ -119,8 +119,8 @@ export default function App() {
           <span className="marker">{person.name}</span>
         </h1>
 
-        <div className="relative grid flex-1 grid-cols-1 items-end gap-x-8 gap-y-8 text-left md:grid-cols-[1fr_auto_1fr]">
-          <div ref={stageRef} className="stage relative mx-auto aspect-square w-[min(100vw,580px)] md:order-2 md:w-[min(46vw,78svh)]">
+        <div className="relative grid flex-1 grid-cols-1 items-end gap-x-8 gap-y-8 text-left md:grid-cols-2 xl:grid-cols-[1fr_auto_1fr]">
+          <div ref={stageRef} className="stage relative mx-auto aspect-square w-[min(100%,580px)] md:order-1 md:col-span-2 md:w-[min(64vw,72svh)] xl:order-2 xl:col-span-1 xl:w-[min(46vw,78svh)]">
             <p
               className={`hint absolute top-[24%] right-[-2%] rotate-6 font-serif text-[clamp(17px,1.5vw,22px)] italic md:right-[-8%] ${
                 mood.pulls ? 'translate-y-2 opacity-0' : ''
@@ -134,7 +134,7 @@ export default function App() {
             </p>
           </div>
 
-          <div className="relative z-10 max-w-[380px] space-y-3 pb-[clamp(20px,5vh,48px)] text-lede md:order-1">
+          <div className="relative z-10 max-w-[380px] space-y-3 pb-[clamp(20px,5vh,48px)] text-lede md:order-2 xl:order-1">
             {bio.map((b, i) => (
               <p key={i} className={i === 0 ? 'font-display text-[1.25em] font-bold tracking-[-0.015em]' : 'text-mute'}>
                 {b}
