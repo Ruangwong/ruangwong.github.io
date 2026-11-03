@@ -114,7 +114,7 @@ export default function App() {
       <Header dark={dark} onToggle={toggle} />
 
       <main className="relative isolate flex flex-1 flex-col px-[clamp(16px,2.4vw,36px)] pt-[clamp(20px,5vh,56px)] text-center">
-        <h1 ref={title} className="headline relative z-0 inline-block text-[21vw] md:whitespace-nowrap">
+        <h1 ref={title} className="headline relative z-0 inline-block self-center text-[21vw] md:whitespace-nowrap">
           <span className="block md:inline">Hey, I’m </span>
           <span className="marker">{person.name}</span>
         </h1>
