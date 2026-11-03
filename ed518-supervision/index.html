@@ -1,0 +1,1701 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ระบบการนิเทศการศึกษา ED 518</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anuphan:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* Layout: a fixed 1600×900 stage scaled to the window; left-aligned grid; a rail at the top tracks the
+   course frame Theory → Practice → Problem → Innovation. Green comes from the Rajapark Institute seal. */
+:root {
+  --paper: #f1f5f0;
+  --surface: #ffffff;
+  --ink: #12211a;
+  --mute: #56675c;
+  --line: #d1ddd3;
+  --green: #08a651;
+  --deep: #0b6a3a;
+  --tint: #e0f0e5;
+  --band: #0b5f35;
+  --on-band: #ffffff;
+  --amber: #8f540b;
+  --amber-tint: #f6ead4;
+  --chrome: #e6ede6;
+
+  --display: "Anuphan", "IBM Plex Sans Thai", "Noto Sans Thai", "Leelawadee UI", Tahoma, sans-serif;
+  --body: "IBM Plex Sans Thai", "Noto Sans Thai", "Leelawadee UI", Tahoma, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #0d1611; --surface: #142019; --ink: #e3eee6; --mute: #9fb3a6; --line: #284032;
+    --green: #2dbf6c; --deep: #86d8a8; --tint: #173226; --band: #17633b; --on-band: #ffffff;
+    --amber: #e3ab5c; --amber-tint: #382a15; --chrome: #0a120e;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #0d1611; --surface: #142019; --ink: #e3eee6; --mute: #9fb3a6; --line: #284032;
+  --green: #2dbf6c; --deep: #86d8a8; --tint: #173226; --band: #17633b; --on-band: #ffffff;
+  --amber: #e3ab5c; --amber-tint: #382a15; --chrome: #0a120e;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  background: var(--chrome);
+  color: var(--ink);
+  font-family: var(--body);
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 3px solid var(--green); outline-offset: 2px; }
+
+/* ---------- app frame ---------- */
+.app {
+  height: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-rows: minmax(0, 1fr) auto;
+}
+.viewport { position: relative; overflow: hidden; grid-column: 1; grid-row: 1; }
+.stage {
+  position: absolute;
+  left: 50%; top: 50%;
+  width: 1600px; height: 900px;
+  transform: translate(-50%, -50%) scale(var(--s, 0.5));
+  transform-origin: center;
+  background: var(--paper);
+  overflow: hidden;
+  box-shadow: 0 0 0 1px var(--line);
+}
+
+/* stage chrome */
+.chrome-top {
+  position: absolute; left: 6rem; right: 6rem; top: 2.1rem;
+  display: flex; align-items: center; gap: 2rem;
+  font-family: var(--mono); font-size: 0.85rem; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--mute);
+  z-index: 2;
+}
+.act-label { color: var(--deep); font-weight: 600; white-space: nowrap; }
+.rail { display: flex; gap: 0.5rem; margin-left: auto; }
+.rail span {
+  padding: 0.35rem 0.8rem; border-radius: 999px; border: 1px solid var(--line);
+  color: var(--mute); background: transparent;
+}
+.rail span.done { color: var(--deep); border-color: var(--tint); background: var(--tint); }
+.rail span.now { color: var(--on-band); background: var(--band); border-color: var(--band); }
+.brand { display: flex; align-items: center; gap: 0.75rem; white-space: nowrap; }
+.brand img { width: 2.6rem; height: 2.6rem; border-radius: 50%; background: #fff; }
+.chrome-bot {
+  position: absolute; left: 6rem; right: 6rem; bottom: 1.6rem;
+  display: flex; justify-content: space-between; align-items: baseline;
+  font-size: 0.95rem; color: var(--mute);
+  z-index: 2;
+}
+.chrome-bot .pg { font-family: var(--mono); font-variant-numeric: tabular-nums; letter-spacing: 0.06em; }
+.stage.bare .chrome-top, .stage.bare .chrome-bot { display: none; }
+
+/* ---------- slides ---------- */
+.slide {
+  display: none;
+  position: absolute; inset: 0;
+  padding: 6.4rem 6rem 4.6rem;
+  flex-direction: column; gap: 1.6rem;
+}
+.slide.active { display: flex; animation: enter 0.35s ease-out; }
+@keyframes enter { from { opacity: 0.25; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.slide > aside.notes { display: none; }
+
+.t {
+  margin: 0;
+  font-family: var(--display); font-weight: 600; font-size: 3rem; line-height: 1.28;
+  letter-spacing: -0.005em; text-wrap: balance; color: var(--ink);
+}
+.kicker {
+  margin: 0; font-family: var(--mono); font-size: 0.95rem; font-weight: 600;
+  letter-spacing: 0.14em; text-transform: uppercase; color: var(--deep);
+}
+.head { display: flex; flex-direction: column; gap: 0.6rem; }
+.lead { margin: 0; font-size: 1.7rem; line-height: 1.6; max-width: 62ch; }
+p, li { text-wrap: pretty; }
+.src { margin: auto 0 0; font-size: 1rem; color: var(--mute); }
+.mute { color: var(--mute); }
+.en { font-family: var(--mono); font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; font-size: 0.95rem; color: var(--deep); }
+
+.g2, .g3, .g4, .g6 { display: grid; gap: 1.4rem; }
+.g2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.g3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.g4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.g6 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.fill { flex: 1; min-height: 0; }
+.g2.fill, .g3.fill, .g4.fill, .g6.fill { align-content: center; }
+
+.card {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
+  padding: 1.5rem 1.7rem; display: flex; flex-direction: column; gap: 0.6rem; min-width: 0;
+}
+.card h3 { margin: 0; font-family: var(--display); font-weight: 600; font-size: 1.75rem; line-height: 1.35; color: var(--deep); }
+.card p { margin: 0; font-size: 1.5rem; line-height: 1.6; }
+.card ul, .list { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 0.55rem; }
+.card li, .list li { font-size: 1.5rem; line-height: 1.55; padding-left: 1.3rem; position: relative; }
+.card li::before, .list li::before {
+  content: ""; position: absolute; left: 0; top: 0.72em; width: 0.45rem; height: 0.45rem;
+  border-radius: 50%; background: var(--green);
+}
+.card.solid { background: var(--band); border-color: var(--band); color: var(--on-band); }
+.card.solid h3, .card.solid .en { color: var(--on-band); }
+.card.soft { background: var(--tint); border-color: var(--tint); }
+.card.dash { background: transparent; border: 2px dashed var(--line); }
+
+.n {
+  flex: none; display: inline-grid; place-items: center;
+  width: 2.6rem; height: 2.6rem; border-radius: 50%;
+  border: 2px solid var(--green); color: var(--deep);
+  font-family: var(--mono); font-weight: 600; font-size: 1.1rem;
+}
+.row { display: flex; align-items: center; gap: 1rem; }
+
+.banner {
+  margin: 0; background: var(--band); color: var(--on-band);
+  border-radius: 10px; padding: 1.1rem 1.7rem;
+  font-size: 1.5rem; line-height: 1.5; font-weight: 500;
+}
+.banner b { font-weight: 700; }
+.banner.soft { background: var(--tint); color: var(--deep); }
+.banner.warn { background: var(--amber-tint); color: var(--amber); }
+
+.flow { display: flex; align-items: stretch; gap: 0.6rem; flex-wrap: nowrap; }
+.flow > .step {
+  flex: 1; min-width: 0;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
+  padding: 0.9rem 1.1rem; font-size: 1.3rem; line-height: 1.45; display: grid; place-items: center; text-align: center;
+}
+.flow > .arr { align-self: center; color: var(--green); font-size: 1.8rem; font-weight: 700; }
+.flow.chips > .step { background: var(--tint); border-color: var(--tint); color: var(--deep); font-weight: 600; }
+
+.tb { width: 100%; border-collapse: collapse; font-size: 1.3rem; line-height: 1.5; }
+.tb th { text-align: left; font-family: var(--display); font-weight: 600; font-size: 1.3rem; color: var(--deep); background: var(--tint); padding: 0.8rem 1.2rem; }
+.tb td { padding: 0.85rem 1.2rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+.tb td:first-child { font-weight: 600; }
+.tb .num { font-family: var(--display); font-weight: 700; color: var(--deep); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.tbl-wrap { overflow-x: auto; }
+
+/* stats */
+.stat .v { font-family: var(--display); font-weight: 700; line-height: 1; color: var(--deep); font-variant-numeric: tabular-nums; }
+.stat .l { font-size: 1.3rem; line-height: 1.5; margin-top: 0.6rem; }
+
+/* cover */
+.cover { padding: 0; }
+.cover-grid { height: 100%; display: grid; grid-template-columns: 1.5fr 1fr; align-items: center; gap: 3rem; padding: 4.5rem 6rem; position: relative; }
+.cover-grid::after {
+  content: ""; position: absolute; right: -9rem; top: 50%; width: 46rem; height: 46rem; transform: translateY(-50%);
+  border-radius: 50%; border: 1.6rem solid var(--tint); pointer-events: none;
+}
+.cover-text { display: flex; flex-direction: column; gap: 1.4rem; position: relative; z-index: 1; }
+.cover-q { margin: 0; font-family: var(--display); font-weight: 700; font-size: 5.1rem; line-height: 1.2; color: var(--ink); text-wrap: balance; }
+.cover-q em { font-style: normal; color: var(--green); }
+.cover-topic { margin: 0; font-family: var(--display); font-weight: 600; font-size: 2.1rem; line-height: 1.4; color: var(--deep); }
+.cover-sub { margin: 0; font-size: 1.6rem; color: var(--mute); }
+.cover-meta { margin-top: 1.2rem; padding-top: 1.4rem; border-top: 2px solid var(--green); font-size: 1.25rem; line-height: 1.7; }
+.cover-meta p { margin: 0; }
+.cover-meta .sep { color: var(--green); padding: 0 0.4rem; }
+.cover-logo { display: grid; place-items: center; position: relative; z-index: 1; }
+.cover-logo img { width: 26rem; height: 26rem; border-radius: 50%; background: #fff; box-shadow: 0 0 0 0.9rem var(--surface), 0 0 0 calc(0.9rem + 2px) var(--line); }
+
+/* slide 02 dots */
+.dots { display: grid; grid-template-columns: repeat(15, 1.55rem); gap: 0.55rem; }
+.dots i { width: 1.55rem; height: 1.55rem; border-radius: 50%; background: var(--green); }
+.dots i.off { background: transparent; border: 2px solid var(--mute); }
+
+/* feedback loop under a flow */
+.loop { position: relative; height: 3.2rem; margin: -0.2rem 3% 0; border: 2px dashed var(--deep); border-top: none; border-radius: 0 0 14px 14px; }
+.loop::before { content: ""; position: absolute; left: -0.65rem; top: -0.4rem; border: 0.6rem solid transparent; border-bottom: 0.8rem solid var(--deep); border-top: none; }
+.loop span { position: absolute; left: 50%; bottom: -0.95rem; transform: translateX(-50%); background: var(--paper); padding: 0 1rem; font-size: 1.25rem; font-weight: 600; color: var(--deep); white-space: nowrap; }
+
+/* slide 13 PIDRE letters */
+.letters { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 1.2rem; }
+.letter { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 1.4rem 1.4rem 1.6rem; display: flex; flex-direction: column; gap: 0.4rem; }
+.letter b { font-family: var(--display); font-size: 5rem; line-height: 1; color: var(--green); }
+.letter .en { font-size: 1rem; }
+.letter span:last-child { font-size: 1.45rem; font-weight: 600; }
+
+/* vertical chain */
+.vchain { display: flex; flex-direction: column; align-items: stretch; gap: 0.35rem; }
+.vchain .box { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 0.9rem 1.4rem; font-size: 1.35rem; line-height: 1.5; }
+.vchain .box b { display: block; font-family: var(--display); font-weight: 600; color: var(--deep); font-size: 1.45rem; }
+.vchain .box.solid { background: var(--band); border-color: var(--band); color: var(--on-band); }
+.vchain .box.solid b { color: var(--on-band); }
+.vchain .down { text-align: center; color: var(--green); font-size: 1.5rem; line-height: 1; font-weight: 700; }
+
+/* curriculum cycle */
+.cycle { display: grid; grid-template-columns: 3.5rem minmax(0, 1fr); }
+.cycle .ret { border: 2px dashed var(--deep); border-right: none; border-radius: 14px 0 0 14px; margin: 1.8rem 0 1.8rem 1rem; position: relative; }
+.cycle .ret::after { content: ""; position: absolute; right: -0.3rem; top: -0.7rem; border: 0.6rem solid transparent; border-left: 0.8rem solid var(--deep); border-right: none; }
+
+/* timeline 18 weeks */
+.weeks { display: grid; grid-template-columns: 9rem repeat(18, minmax(0, 1fr)); gap: 0.35rem; align-items: stretch; }
+.weeks .wk { font-family: var(--mono); font-size: 0.95rem; color: var(--mute); text-align: center; padding-bottom: 0.3rem; font-variant-numeric: tabular-nums; }
+.weeks .lab { font-family: var(--display); font-weight: 700; font-size: 1.5rem; color: var(--deep); display: flex; align-items: center; }
+.weeks .bar { border-radius: 8px; background: var(--band); color: var(--on-band); padding: 0.7rem 0.9rem; font-size: 1.15rem; line-height: 1.45; }
+.weeks .bar.l { background: var(--tint); color: var(--deep); }
+.weeks .gap15 { border: 2px dashed var(--line); border-radius: 8px; }
+
+/* evidence bars */
+.ev { display: grid; grid-template-columns: 7.5rem minmax(0, 1fr); gap: 0.5rem 0.8rem; align-items: center; font-size: 1.15rem; }
+.ev .track { height: 1.1rem; background: var(--tint); border-radius: 999px; overflow: hidden; }
+.ev .track i { display: block; height: 100%; background: var(--green); border-radius: 999px; }
+.big-sd { font-family: var(--display); font-weight: 700; font-size: 2.6rem; color: var(--deep); line-height: 1.1; font-variant-numeric: tabular-nums; }
+
+/* discussion */
+.qs { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.8rem; }
+.qs li { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 1.2rem; align-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 1rem 1.4rem; cursor: pointer; transition: opacity 0.2s, background 0.2s, transform 0.2s; }
+.qs li p { margin: 0; font-size: 1.45rem; line-height: 1.5; }
+.qs.focusing li { opacity: 0.35; }
+.qs.focusing li.on { opacity: 1; background: var(--band); border-color: var(--band); color: var(--on-band); transform: scale(1.015); }
+.qs li.on .n { border-color: var(--on-band); color: var(--on-band); }
+.jump { border: 1px solid var(--line); background: var(--paper); color: var(--deep); border-radius: 999px; padding: 0.35rem 0.9rem; font-size: 1rem; cursor: pointer; white-space: nowrap; }
+.qs li.on .jump { background: transparent; color: var(--on-band); border-color: var(--on-band); }
+
+/* bibliography */
+.bib { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: minmax(0, 1fr); gap: 3rem; font-size: 0.9rem; line-height: 1.5; }
+.bib > div { overflow-y: auto; min-height: 0; padding-right: 0.5rem; }
+.bib p { margin: 0 0 0.55rem; padding-left: 2.2em; text-indent: -2.2em; break-inside: avoid; }
+.bib i { font-style: italic; }
+
+/* members */
+.people { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1.6rem 1.4rem; }
+.person { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 0.7rem; margin: 0; }
+.person .ph { width: 9.5rem; height: 9.5rem; border-radius: 50%; overflow: hidden; border: 3px solid var(--green); background: var(--tint); display: grid; place-items: center; }
+.person .ph img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.person figcaption { font-size: 1.2rem; line-height: 1.45; }
+.person figcaption .no { display: block; font-family: var(--mono); font-size: 0.9rem; color: var(--mute); }
+
+/* ---------- control bar ---------- */
+.controls {
+  grid-column: 1 / -1; grid-row: 2;
+  display: flex; align-items: center; gap: 0.5rem;
+  padding: 0.5rem max(16px, env(safe-area-inset-right, 0px)) calc(0.5rem + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+  background: var(--chrome); border-top: 1px solid var(--line);
+  font-size: 14px;
+}
+.btn {
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 8px;
+  padding: 0.45rem 0.75rem; cursor: pointer; white-space: nowrap; line-height: 1.2;
+}
+.btn:hover { border-color: var(--green); }
+.btn[aria-pressed="true"] { background: var(--band); color: var(--on-band); border-color: var(--band); }
+.btn kbd { font-family: var(--mono); font-size: 11px; color: var(--mute); border: 1px solid var(--line); border-radius: 4px; padding: 0 0.3rem; }
+.btn[aria-pressed="true"] kbd { color: var(--on-band); border-color: rgba(255,255,255,.5); }
+.counter { font-family: var(--mono); font-variant-numeric: tabular-nums; min-width: 5.5rem; text-align: center; }
+.progress { flex: 1; min-width: 3rem; height: 4px; background: var(--line); border-radius: 999px; overflow: hidden; }
+.progress i { display: block; height: 100%; width: 0; background: var(--green); transition: width 0.25s; }
+.clock { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.back-btn { background: var(--amber-tint); color: var(--amber); border-color: var(--amber-tint); }
+.spacer { flex: 1; }
+
+/* ---------- notes panel ---------- */
+.notes-panel {
+  grid-column: 2; grid-row: 1;
+  width: min(440px, 38vw);
+  background: var(--surface); border-left: 1px solid var(--line);
+  display: flex; flex-direction: column; min-height: 0;
+}
+.np-head { padding: 1rem 1.2rem 0.9rem; border-bottom: 1px solid var(--line); display: flex; flex-direction: column; gap: 0.5rem; }
+.np-title { font-family: var(--display); font-weight: 600; font-size: 1.15rem; line-height: 1.4; margin: 0; }
+.np-meta { display: flex; flex-wrap: wrap; gap: 0.4rem; font-size: 13px; }
+.chip { background: var(--tint); color: var(--deep); border-radius: 999px; padding: 0.2rem 0.65rem; font-variant-numeric: tabular-nums; }
+.chip.warn { background: var(--amber-tint); color: var(--amber); }
+.np-timer { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+.np-timer .clock { font-size: 1.6rem; font-weight: 600; }
+.np-body { padding: 1rem 1.2rem 1.4rem; overflow-y: auto; font-size: 15.5px; line-height: 1.75; }
+.np-body p { margin: 0 0 0.85rem; }
+.np-body .ref { font-size: 13.5px; color: var(--mute); border-top: 1px solid var(--line); padding-top: 0.7rem; margin-top: 1rem; }
+
+/* ---------- overlays ---------- */
+.overlay {
+  position: fixed; inset: 0; z-index: 20;
+  background: var(--paper); overflow-y: auto;
+  padding: calc(1.5rem + env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) calc(2rem + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+}
+.ov-inner { max-width: 1180px; margin: 0 auto; display: flex; flex-direction: column; gap: 1.5rem; }
+.ov-top { display: flex; align-items: center; justify-content: space-between; gap: 1rem; position: sticky; top: 0; background: var(--paper); padding: 0.4rem 0; z-index: 1; }
+.ov-top h2 { margin: 0; font-family: var(--display); font-weight: 600; font-size: 1.5rem; }
+.ov-act h3 { margin: 0 0 0.6rem; font-family: var(--mono); font-size: 0.8rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--deep); }
+.ov-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 0.6rem; }
+.ov-item { text-align: left; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 0.75rem 0.9rem; cursor: pointer; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 0.7rem; align-items: baseline; line-height: 1.45; }
+.ov-item:hover { border-color: var(--green); }
+.ov-item.cur { background: var(--band); color: var(--on-band); border-color: var(--band); }
+.ov-item .no { font-family: var(--mono); font-size: 12px; color: var(--mute); }
+.ov-item.cur .no { color: var(--on-band); }
+.ov-item small { display: block; color: var(--mute); font-size: 12px; }
+.ov-item.cur small { color: var(--on-band); }
+.sc-item { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 1.2rem 1.4rem; display: flex; flex-direction: column; gap: 0.6rem; }
+.sc-item h3 { margin: 0; font-family: var(--display); font-weight: 600; font-size: 1.2rem; line-height: 1.4; }
+.sc-item .np-meta { align-items: center; }
+.sc-item .body { font-size: 15.5px; line-height: 1.75; max-width: 75ch; }
+.sc-item .body p { margin: 0 0 0.75rem; }
+.sc-item .body .ref { font-size: 13.5px; color: var(--mute); }
+
+/* ---------- phone / narrow ---------- */
+@media (max-width: 760px) {
+  html { font-size: 10.5px; }
+  body { overflow: auto; }
+  .app { height: auto; min-height: 100%; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto auto; }
+  .viewport { overflow: visible; }
+  .stage { position: relative; left: auto; top: auto; width: auto; height: auto; transform: none; box-shadow: none; }
+  .chrome-top { position: static; padding: 1.6rem max(16px, env(safe-area-inset-right, 0px)) 0 max(16px, env(safe-area-inset-left, 0px)); flex-wrap: wrap; gap: 0.8rem; }
+  .rail { margin-left: 0; order: 3; width: 100%; flex-wrap: wrap; }
+  .brand { margin-left: auto; }
+  .chrome-bot { position: static; padding: 0 max(16px, env(safe-area-inset-right, 0px)) 1.6rem max(16px, env(safe-area-inset-left, 0px)); gap: 1rem; }
+  .slide { position: relative; inset: auto; padding: 1.8rem max(16px, env(safe-area-inset-right, 0px)) 2.4rem max(16px, env(safe-area-inset-left, 0px)); }
+  .g2, .g3, .cover-grid { grid-template-columns: minmax(0, 1fr); }
+  .g4, .g6, .people, .letters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .flow { flex-wrap: wrap; }
+  .flow > .step { flex: 1 1 40%; }
+  .cover-grid { padding: 2.4rem max(16px, env(safe-area-inset-right, 0px)) 2.4rem max(16px, env(safe-area-inset-left, 0px)); }
+  .cover-grid::after { display: none; }
+  .cover-logo { order: -1; justify-items: start; }
+  .cover-logo img { width: 12rem; height: 12rem; }
+  .cover-q { font-size: 3.8rem; }
+  .dots { grid-template-columns: repeat(15, minmax(0, 1fr)); gap: 0.4rem; }
+  .dots i { width: auto; height: auto; aspect-ratio: 1; }
+  .weeks { grid-template-columns: 5rem repeat(18, minmax(0, 1fr)); }
+  .weeks .bar { font-size: 1rem; padding: 0.5rem; }
+  .bib { grid-template-columns: minmax(0, 1fr); gap: 0.5rem; }
+  .bib > div { overflow: visible; }
+  .qs li { grid-template-columns: auto minmax(0, 1fr); }
+  .qs li .jump { grid-column: 2; justify-self: start; }
+  .loop span { white-space: normal; text-align: center; width: 80%; }
+  .notes-panel { grid-column: 1; grid-row: 2; width: auto; border-left: none; border-top: 1px solid var(--line); }
+  .controls { grid-row: 3; position: sticky; bottom: 0; flex-wrap: wrap; z-index: 5; }
+  .controls .lbl { display: none; }
+  .btn kbd { display: none; }
+  .progress { order: 10; flex-basis: 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .slide.active { animation: none; }
+  .qs li, .progress i { transition: none; }
+}
+
+@media print {
+  @page { size: 1600px 900px; margin: 0; }
+  html { font-size: 16px; }
+  body { overflow: visible; background: var(--paper); }
+  .app { display: block; height: auto; }
+  .controls, .notes-panel, .overlay, .chrome-top, .chrome-bot { display: none !important; }
+  .viewport { overflow: visible; }
+  .stage { position: static; transform: none; width: 1600px; height: auto; box-shadow: none; }
+  .slide { display: flex !important; position: relative; width: 1600px; height: 900px; padding-top: 4.6rem; break-after: page; animation: none !important; }
+  .bib > div { overflow: visible; }
+}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <div class="viewport" id="viewport">
+    <div class="stage" id="stage">
+      <div class="chrome-top" aria-hidden="true">
+        <span class="act-label" id="actLabel"></span>
+        <div class="rail" id="rail"><span data-part="theory">Theory</span><span data-part="practice">Practice</span><span data-part="problem">Problem</span><span data-part="innovation">Innovation</span></div>
+        <span class="brand"><img src="img/logo.jpg" alt="">ED 518 · กลุ่มที่ 1</span>
+      </div>
+
+<!-- ======================= ACT I ======================= -->
+<section class="slide cover" data-act="I" data-time="1" data-title="การนิเทศที่มีคุณภาพ วัดจากอะไร?">
+  <div class="cover-grid">
+    <div class="cover-text">
+      <h1 class="cover-q">การนิเทศที่มีคุณภาพ <em>วัดจากอะไร?</em></h1>
+      <p class="cover-topic">แนวคิด ทฤษฎี หลักการ และระบบการนิเทศการศึกษา</p>
+      <p class="cover-sub">จากการพัฒนาครู สู่คุณภาพการเรียนรู้ของผู้เรียน</p>
+      <div class="cover-meta">
+        <p>รายวิชา ED 518 การนิเทศการศึกษาและการพัฒนาหลักสูตร</p>
+        <p>หลักสูตรศึกษาศาสตรมหาบัณฑิต สาขาการบริหารการศึกษา</p>
+        <p>สถาบันรัชต์ภาคย์<span class="sep">|</span>กลุ่มที่ 1<span class="sep">|</span>ปีการศึกษา 2569</p>
+      </div>
+    </div>
+    <div class="cover-logo"><img src="img/logo.jpg" alt="ตราสถาบันรัชต์ภาคย์"></div>
+  </div>
+  <aside class="notes">
+    <p>“เรียนอาจารย์ผู้สอนทั้งสองท่าน และสวัสดีเพื่อนนักศึกษาทุกท่านครับ</p>
+    <p>วันนี้กลุ่มที่ 1 จะนำเสนอเรื่องแนวคิด ทฤษฎี หลักการ และระบบการนิเทศการศึกษา</p>
+    <p>แต่ก่อนที่เราจะเข้าสู่ทฤษฎี ผมอยากชวนทุกท่านคิดถึงคำถามหนึ่งครับ</p>
+    <p>หากวันหนึ่งเราเป็นผู้บริหารสถานศึกษา และต้องรายงานผลการนิเทศภายใน เราจะใช้อะไรเป็นหลักฐานว่าโรงเรียนของเรามีการนิเทศที่มีคุณภาพ?</p>
+    <p>จำนวนครูที่ได้รับการนิเทศ? จำนวนครั้งที่เข้าเยี่ยมชั้นเรียน? หรือการเปลี่ยนแปลงที่เกิดขึ้นกับการสอนและการเรียนรู้?</p>
+    <p>คำถามนี้จะเป็นประเด็นที่เชื่อมเนื้อหาตลอดการนำเสนอของเราครับ”</p>
+    <p class="ref">อ้างอิง: เอกสารวิชาการกลุ่มที่ 1, หัวข้อ 1; Harris (1985)</p>
+  </aside>
+</section>
+
+<section class="slide" data-act="I" data-time="2" data-title="98.1% คือความสำเร็จแล้วหรือยัง?">
+  <h2 class="t">98.1% คือความสำเร็จแล้วหรือยัง?</h2>
+  <div class="g2 fill" style="grid-template-columns: 1.15fr 1fr; align-items: center;">
+    <div class="stat">
+      <div class="v" style="font-size: 10rem; color: var(--green);">98.1%</div>
+      <div class="l" style="font-size: 1.6rem;">ครูได้รับการนิเทศตามรายงานของโรงเรียน</div>
+      <div class="row" style="margin-top: 1.4rem; gap: 1.6rem; align-items: center;">
+        <div class="dots" id="dots105" role="img" aria-label="จุด 105 จุด แทนครู 105 คน ระบายสี 103 จุด"></div>
+      </div>
+      <div style="margin-top: 0.8rem; font-size: 1.35rem; font-weight: 600; color: var(--deep);">103 จาก 105 คน</div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 1.4rem;">
+      <div class="card">
+        <div class="stat"><div class="v" style="font-size: 4.6rem;">88.02%</div><div class="l">ค่าเฉลี่ยผลการประเมินจากการนิเทศ อยู่ในระดับดี</div></div>
+      </div>
+      <p class="mute" style="margin: 0; font-size: 1.25rem;">กรณีศึกษา: โรงเรียนบ้านสุไหงโก-ลก ปีการศึกษา 2569</p>
+    </div>
+  </div>
+  <p class="banner">แต่…เรารู้ได้อย่างไรว่าผู้เรียนพัฒนาขึ้นจริง?</p>
+  <aside class="notes">
+    <p>“ลองพิจารณาข้อมูลชุดนี้ครับ</p>
+    <p>โรงเรียนบ้านสุไหงโก-ลก จังหวัดนราธิวาส มีข้อมูลครูและบุคลากรรวม 105 คน ตามรายงานปีการศึกษา 2569</p>
+    <p>ข้อมูลการนิเทศระบุว่า ครูได้รับการนิเทศ 103 จากฐาน 105 คน คิดเป็นร้อยละ 98.1</p>
+    <p>นอกจากนี้ ค่าเฉลี่ยผลการประเมินจากการนิเทศทุกครั้ง ทุกกลุ่มสาระ อยู่ที่ร้อยละ 88.02 ซึ่งโรงเรียนรายงานว่าอยู่ในระดับดี</p>
+    <p>หากพิจารณาในมุมของการดำเนินงาน ตัวเลขเหล่านี้สะท้อนว่าโรงเรียนสามารถดำเนินระบบนิเทศได้อย่างครอบคลุม</p>
+    <p>แต่ถ้าเราเปลี่ยนคำถามจาก ‘โรงเรียนนิเทศครูไปกี่คนแล้ว’ เป็น ‘นักเรียนได้เรียนรู้อะไรเพิ่มขึ้นบ้าง’ ตัวเลขชุดเดิมยังตอบคำถามได้ไม่ครบครับ</p>
+    <p>โดยเฉพาะประเด็นการอ่านจับใจความของนักเรียน ป.6 ซึ่งเป็นกรณีศึกษาของกลุ่ม เอกสารยังไม่มีข้อมูลผลการอ่านก่อนและหลังเรียนที่สามารถนำมายืนยันผลการเปลี่ยนแปลงได้</p>
+    <p>ดังนั้น วันนี้เราจะไม่ได้มาตัดสินว่าโรงเรียนแห่งนี้ประสบความสำเร็จหรือล้มเหลว แต่จะใช้ข้อมูลดังกล่าวเป็นจุดเริ่มต้นในการทำความเข้าใจว่าการนิเทศที่มีคุณภาพควรพิจารณาอะไรบ้าง”</p>
+    <p class="ref">อ้างอิง: เอกสารวิชาการกลุ่มที่ 1, หัวข้อ 3.2, หน้า 6–7</p>
+  </aside>
+</section>
+
+<section class="slide" data-act="I" data-time="1" data-title="4 คำถาม สู่ความเข้าใจระบบนิเทศ">
+  <h2 class="t">4 คำถาม สู่ความเข้าใจระบบนิเทศ</h2>
+  <div class="g4 fill">
+    <div class="card"><span class="en">Theory</span><h3>การนิเทศมีแนวคิดและหลักการอย่างไร?</h3></div>
+    <div class="card"><span class="en">Practice</span><h3>สถานศึกษานำไปปฏิบัติอย่างไร?</h3></div>
+    <div class="card"><span class="en">Problem</span><h3>อุปสรรคและช่องว่างอยู่ตรงไหน?</h3></div>
+    <div class="card"><span class="en">Innovation</span><h3>เราจะออกแบบระบบให้ดีขึ้นได้อย่างไร?</h3></div>
+  </div>
+  <div style="display: flex; flex-direction: column; gap: 0.8rem;">
+    <span class="en">เป้าหมายร่วม</span>
+    <div class="flow chips"><div class="step">ครู</div><span class="arr">→</span><div class="step">การจัดการเรียนรู้</div><span class="arr">→</span><div class="step">ผู้เรียน</div><span class="arr">→</span><div class="step">หลักสูตร</div></div>
+  </div>
+  <aside class="notes">
+    <p>“เพื่อตอบคำถามดังกล่าว กลุ่มเราจะนำเสนอเนื้อหาเป็นสี่ส่วนครับ</p>
+    <p>ส่วนแรก Theory เราจะศึกษาความหมาย ทฤษฎี หลักการ และระบบการนิเทศ</p>
+    <p>ส่วนที่สอง Practice เราจะพาไปดูกรณีศึกษาโรงเรียนบ้านสุไหงโก-ลก</p>
+    <p>ส่วนที่สาม Problem เราจะนำทฤษฎีมาใช้วิเคราะห์ปัญหาและข้อจำกัดจากกรณีศึกษา</p>
+    <p>และส่วนสุดท้าย Innovation เราจะนำเสนอแบบจำลอง PIDRE-D ซึ่งคณะผู้จัดทำเสนอให้ใช้กระบวนการนิเทศที่เป็นระบบ ควบคู่กับวิธีสนับสนุนครูที่แตกต่างตามระดับพัฒนาการ</p>
+    <p>ก่อนจะพิจารณาระบบจริง เรามาเริ่มต้นที่พื้นฐานทางทฤษฎีกันก่อนครับ”</p>
+    <p class="ref">อ้างอิง: เอกสารวิชาการกลุ่มที่ 1, หัวข้อ 1</p>
+  </aside>
+</section>
+
+<!-- ======================= ACT II ======================= -->
+<section class="slide" data-act="II" data-part="theory" data-time="2" data-title="การนิเทศการศึกษาคืออะไร?">
+  <div class="head"><p class="kicker">Educational Supervision</p><h2 class="t">การนิเทศการศึกษาคืออะไร?</h2></div>
+  <p class="lead" style="font-size: 1.9rem; max-width: 58ch; border-left: 4px solid var(--green); padding-left: 1.6rem;">กระบวนการทำงานร่วมกันระหว่างผู้นิเทศและผู้รับการนิเทศ เพื่อพัฒนาคุณภาพการจัดการเรียนรู้ตามหลักสูตร โดยมุ่งผลการเรียนรู้ของผู้เรียนและการพัฒนาตนเองของครูอย่างต่อเนื่อง</p>
+  <div style="display: flex; flex-direction: column; gap: 0.9rem;">
+    <span class="en">3 องค์ประกอบหลัก</span>
+    <div class="g3">
+      <div class="card"><div class="row"><span class="n">1</span><h3>ผู้นิเทศและผู้รับการนิเทศ</h3></div></div>
+      <div class="card"><div class="row"><span class="n">2</span><h3>การจัดการเรียนรู้ตามหลักสูตร</h3></div></div>
+      <div class="card solid"><div class="row"><span class="n" style="border-color: var(--on-band); color: var(--on-band);">3</span><h3>ผลการเรียนรู้ของผู้เรียน</h3></div></div>
+    </div>
+  </div>
+  <p class="src">Harris (1985); Glickman &amp; Gordon (1987)</p>
+  <aside class="notes">
+    <p>“เมื่อพูดถึงคำว่าการนิเทศการศึกษา หลายคนอาจนึกถึงผู้บริหารหรือผู้นิเทศที่เข้าไปสังเกตการสอนในห้องเรียน</p>
+    <p>แต่เมื่อศึกษาความหมายจากนักวิชาการ จะพบว่าการนิเทศมีขอบเขตกว้างกว่านั้นครับ</p>
+    <p>Harris ในปี 1985 มองการนิเทศเป็นการดำเนินงานของบุคลากรในโรงเรียนที่เกี่ยวข้องกับการคงไว้หรือปรับเปลี่ยนการดำเนินงาน เพื่อส่งผลต่อการสอนของครูและการเรียนรู้ของผู้เรียน</p>
+    <p>ส่วน Glickman และ Gordon ในปี 1987 ให้ความสำคัญกับเป้าหมายระยะยาว คือทำให้ครูสามารถคิด วิเคราะห์ และแก้ปัญหาการสอนด้วยตนเองได้</p>
+    <p>ต่อมา Glickman และคณะในปี 2009 ยังกล่าวถึงขอบข่ายงานนิเทศห้าด้าน ได้แก่ การช่วยเหลือครูโดยตรง การพัฒนากลุ่ม การพัฒนาวิชาชีพ การพัฒนาหลักสูตร และการวิจัยเชิงปฏิบัติการ</p>
+    <p>เมื่อนำแนวคิดเหล่านี้มาสังเคราะห์ การนิเทศจึงเป็นกระบวนการทำงานร่วมกัน ไม่ใช่เพียงการตรวจสอบ</p>
+    <p>โดยการนำเสนอของกลุ่มเราจะเน้นการนิเทศภายใน ซึ่งเป็นการนิเทศที่บุคลากรของสถานศึกษาดำเนินการเองครับ”</p>
+    <p class="ref">อ้างอิง: Harris (1985); Glickman &amp; Gordon (1987); Glickman et al. (2009); อลงกรณ์ สุขวัน และคณะ (2567)</p>
+  </aside>
+</section>
+
+<section class="slide" data-act="II" data-part="theory" data-time="1.5" data-title="การนิเทศส่งผลต่อใครบ้าง?">
+  <div class="head"><p class="kicker">4 ระดับของการพัฒนา</p><h2 class="t">การนิเทศส่งผลต่อใครบ้าง?</h2></div>
+  <div class="g4 fill">
+    <div class="card"><h3>ครู</h3><p>พัฒนาวิธีสอนและการสะท้อนคิด</p></div>
+    <div class="card"><h3>ผู้เรียน</h3><p>มุ่งพัฒนาผลการเรียนรู้</p></div>
+    <div class="card"><h3>หลักสูตร</h3><p>ใช้ข้อมูลห้องเรียนปรับปรุงการนำหลักสูตรไปใช้</p></div>
+    <div class="card"><h3>สถานศึกษา</h3><p>สร้างระบบพัฒนาวิชาชีพภายในองค์กร</p></div>
+  </div>
+  <div class="flow chips"><div class="step">การนิเทศ</div><span class="arr">→</span><div class="step">การพัฒนาครู</div><span class="arr">→</span><div class="step">การจัดการเรียนรู้</div><span class="arr">→</span><div class="step">ผลที่เกิดกับผู้เรียน</div></div>
+  <aside class="notes">
+    <p>“การนิเทศมีจุดมุ่งหมายที่เชื่อมโยงกันอย่างน้อยสี่ระดับครับ</p>
+    <p>ระดับแรกคือครู การนิเทศควรช่วยให้ครูพัฒนาวิธีจัดการเรียนรู้ และสามารถวิเคราะห์การสอนของตนเองได้</p>
+    <p>ระดับที่สองคือผู้เรียน ซึ่งเป็นเป้าหมายปลายทางของการพัฒนา</p>
+    <p>ระดับที่สามคือหลักสูตร เพราะข้อมูลจากการจัดการเรียนรู้สามารถนำกลับไปใช้ปรับหน่วยการเรียนรู้ เนื้อหา หรือการประเมินได้</p>
+    <p>และระดับสุดท้ายคือสถานศึกษา ที่สามารถพัฒนาบุคลากรผ่านระบบนิเทศภายในของตนเอง</p>
+    <p>เอกสารกลุ่มยังอ้างงานวิจัยของยุภารัตน์ หาสุข และคณะ ที่พบความสัมพันธ์ทางบวกระดับสูงระหว่างทักษะการนิเทศของผู้บริหารกับพฤติกรรมการสอนของครู โดยมีค่าสหสัมพันธ์ 0.863</p>
+    <p>แต่ต้องระวังว่า ค่าสหสัมพันธ์นี้ไม่ได้ยืนยันว่าการนิเทศเป็นสาเหตุที่ทำให้พฤติกรรมการสอนดีขึ้นโดยตรง</p>
+    <p>นี่เป็นตัวอย่างว่าการศึกษาผลของการนิเทศต้องใช้หลักฐานอย่างรอบคอบครับ”</p>
+    <p class="ref">อ้างอิง: Glickman &amp; Gordon (1987); Glickman et al. (2009); สามารถ ทิมนาค (2554); ยุภารัตน์ หาสุข และคณะ (2568)</p>
+  </aside>
+</section>
+
+<section class="slide" data-act="II" data-part="theory" data-time="1.5" data-title="จากการควบคุม สู่การร่วมพัฒนา">
+  <div class="head"><p class="kicker">วิวัฒนาการแนวคิดการนิเทศ</p><h2 class="t">จากการควบคุม สู่การร่วมพัฒนา</h2></div>
+  <div class="g4 fill" style="align-content: center;">
+    <div class="card"><div class="row"><span class="n">1</span><span class="en">Inspection &amp; Control</span></div><h3>ตรวจสอบและควบคุม</h3></div>
+    <div class="card"><div class="row"><span class="n">2</span><span class="en">Democratic Supervision</span></div><h3>รับฟังและทำงานร่วมกัน</h3></div>
+    <div class="card"><div class="row"><span class="n">3</span><span class="en">Instructional Improvement</span></div><h3>ใช้ข้อมูลพัฒนาการสอน</h3></div>
+    <div class="card"><div class="row"><span class="n">4</span><span class="en">Collaborative Learning</span></div><h3>เรียนรู้และพัฒนาร่วมกัน</h3></div>
+  </div>
+  <p class="banner soft">แนวคิดเหล่านี้ไม่ได้แยกขาดจากกัน</p>
+  <aside class="notes">
+    <p>“หากพิจารณาวิวัฒนาการของการนิเทศการศึกษา จะเห็นว่าจุดเน้นเปลี่ยนแปลงไปตามแนวคิดการบริหารครับ</p>
+    <p>แนวคิดการตรวจสอบและควบคุมให้ความสำคัญกับการปฏิบัติตามมาตรฐาน โดยผู้นิเทศเป็นผู้กำหนดและตรวจสอบ</p>
+    <p>ต่อมาแนวคิดประชาธิปไตยเริ่มให้ความสำคัญกับการรับฟังและการมีส่วนร่วมของครู</p>
+    <p>แนวคิดการนิเทศเพื่อพัฒนาการสอนให้ความสำคัญกับข้อมูลจากห้องเรียน และการสะท้อนผลร่วมกัน</p>
+    <p>ส่วนแนวคิดเชิงร่วมมือเน้นให้ครูเรียนรู้ร่วมกัน และพัฒนาความสามารถในการกำกับตนเอง</p>
+    <p>อย่างไรก็ตาม เราไม่ควรเข้าใจว่าทั้งสี่แนวคิดเกิดขึ้นแล้วสิ้นสุดลงเป็นช่วง ๆ เพราะในสถานศึกษาปัจจุบัน การตรวจสอบตามมาตรฐานกับการนิเทศเพื่อพัฒนาอาจดำเนินอยู่พร้อมกันได้ครับ”</p>
+    <p class="ref">อ้างอิง: Burton &amp; Brueckner (1955); Goldhammer (1969); Glickman &amp; Gordon (1987); Sergiovanni &amp; Starratt (1998); DuFour (2004)</p>
+  </aside>
+</section>
+
+<section class="slide" data-act="II" data-part="theory" data-time="2" data-title="ทำไมการนิเทศต้องเข้าใจทั้งคนและระบบ?">
+  <div class="head"><p class="kicker">4 ฐานทฤษฎีสำคัญ</p><h2 class="t">ทำไมการนิเทศต้องเข้าใจทั้งคนและระบบ?</h2></div>
+  <div class="tbl-wrap">
+    <table class="tb">
+      <thead><tr><th style="width: 38%;">ทฤษฎี</th><th>สิ่งที่ช่วยอธิบาย</th></tr></thead>
+      <tbody>
+        <tr><td>Human Relations</td><td>ความไว้วางใจและแรงจูงใจ</td></tr>
+        <tr><td>Systems Theory</td><td>ความสัมพันธ์ขององค์ประกอบและ Feedback</td></tr>
+        <tr><td>Adult Learning</td><td>ประสบการณ์และการมีส่วนร่วมของครู</td></tr>
+        <tr><td>Reflective Practice</td><td>การเรียนรู้ผ่านการสะท้อนคิด</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="flow" style="margin-top: auto;">
+    <div class="step" style="flex: 0.7; background: var(--band); color: var(--on-band); border-color: var(--band); font-weight: 700;">การนิเทศ</div><span class="arr">=</span>
+    <div class="step">ความสัมพันธ์ของคน</div><span class="arr">+</span>
+    <div class="step">กระบวนการพัฒนาวิชาชีพ</div><span class="arr">+</span>
+    <div class="step">ระบบงาน</div>
+  </div>
+  <aside class="notes">
+    <p>“ก่อนที่เราจะเลือกวิธีนิเทศ เราต้องเข้าใจพื้นฐานทางทฤษฎีที่เกี่ยวข้องกับการนิเทศเสียก่อนครับ</p>
+    <p>แนวคิดแรกคือมนุษยสัมพันธ์ ซึ่งชี้ให้เห็นว่าความไว้วางใจ ความสัมพันธ์ และแรงจูงใจมีความสำคัญต่อการทำงานของครู</p>
+    <p>แนวคิดที่สองคือทฤษฎีระบบ ของ von Bertalanffy และการประยุกต์ด้านการบริหารการศึกษาของ Hoy และ Miskel ซึ่งช่วยให้เรามองสถานศึกษาเป็นระบบที่มีองค์ประกอบสัมพันธ์กัน</p>
+    <p>แนวคิดที่สามคือการเรียนรู้ของผู้ใหญ่จาก Knowles ซึ่งอธิบายว่าผู้ใหญ่ใช้ประสบการณ์เดิมเป็นแหล่งเรียนรู้ และให้ความสำคัญกับปัญหาที่สัมพันธ์กับบทบาทของตนเอง</p>
+    <p>แนวคิดที่สี่คือการปฏิบัติแบบสะท้อนคิดของ Schön ซึ่งอธิบายว่าผู้ประกอบวิชาชีพสามารถเรียนรู้จากการทบทวนสิ่งที่เกิดขึ้นระหว่างและหลังการปฏิบัติงาน</p>
+    <p>เมื่อนำทั้งสี่แนวคิดมาใช้กับการนิเทศ เราจะเห็นว่า ผู้นิเทศไม่ได้ทำหน้าที่เพียงให้คำแนะนำ แต่ต้องสร้างความไว้วางใจ เข้าใจประสบการณ์ของครู และจัดกระบวนการให้ครูได้สะท้อนคิดและพัฒนาตนเองด้วยครับ”</p>
+    <p class="ref">อ้างอิง: Sergiovanni &amp; Starratt (1998); von Bertalanffy (1968); Hoy &amp; Miskel (2013); Knowles (1980); Schön (1983)</p>
+  </aside>
+</section>
+
+<section class="slide" data-act="II" data-part="theory" data-time="2.5" data-title="ครูแต่ละคนควรได้รับการนิเทศเหมือนกันหรือไม่?">
+  <div class="head"><p class="kicker">Developmental Supervision</p><h2 class="t">ครูแต่ละคนควรได้รับการนิเทศเหมือนกันหรือไม่?</h2></div>
+  <div class="g3 fill">
+    <div class="card"><span class="en">Directive</span><p>ผู้นิเทศชี้แนะ ให้แนวทางและตัวอย่างชัดเจน</p></div>
+    <div class="card"><span class="en">Collaborative</span><p>ผู้นิเทศและครูร่วมวิเคราะห์และตัดสินใจ</p></div>
+    <div class="card"><span class="en">Nondirective</span><p>ครูกำหนดเป้าหมายและแนวทาง โดยผู้นิเทศรับฟังและตั้งคำถาม</p></div>
+  </div>
+  <p class="banner"><b>เป้าหมาย:</b> พัฒนาครูให้คิดและแก้ปัญหาการสอนด้วยตนเอง</p>
+  <p class="src" style="margin-top: 0;">Glickman &amp; Gordon (1987)</p>
+  <aside class="notes">
+    <p>“ลองพิจารณาครูสองคนครับ</p>
+    <p>คนแรกยังไม่มั่นใจว่าจะแก้ปัญหาการสอนอย่างไร ส่วนอีกคนสามารถวิเคราะห์ปัญหา ออกแบบกิจกรรม และประเมินผลการสอนของตนเองได้</p>
+    <p>ถ้าเราใช้วิธีนิเทศเหมือนกันทั้งสองคน จะเหมาะสมหรือไม่?</p>
+    <p>Glickman และ Gordon เสนอแนวคิดการนิเทศแบบพัฒนาการ โดยเลือกวิธีนิเทศให้เหมาะกับระดับความสามารถในการคิดเชิงนามธรรมและการแก้ปัญหาของครู</p>
+    <p>รูปแบบแรกคือ Directive ผู้นิเทศให้แนวทางที่ชัดเจน เหมาะกับครูที่ยังต้องการความช่วยเหลือในการแก้ปัญหา</p>
+    <p>รูปแบบที่สองคือ Collaborative ทั้งสองฝ่ายร่วมกันวิเคราะห์ปัญหาและตกลงแนวทางแก้ไข</p>
+    <p>รูปแบบที่สามคือ Nondirective ครูเป็นผู้ตั้งเป้าหมายและออกแบบแนวทางของตนเอง ขณะที่ผู้นิเทศทำหน้าที่รับฟังและตั้งคำถาม</p>
+    <p>เป้าหมายระยะยาวไม่ใช่ทำให้ครูพึ่งพาผู้นิเทศตลอดไป แต่คือการเพิ่มความสามารถในการพัฒนาตนเอง</p>
+    <p>ที่สำคัญ การนิเทศแบบไม่ชี้นำไม่ได้หมายถึงการปล่อยให้ครูทำงานตามลำพัง และเราไม่ควรใช้จำนวนปีที่ทำงานเป็นเกณฑ์ตัดสินความพร้อมของครูเพียงอย่างเดียว</p>
+    <p>แนวคิดนี้จะกลับมามีบทบาทสำคัญในแบบจำลอง PIDRE-D ช่วงท้ายการนำเสนอครับ”</p>
+    <p class="ref">อ้างอิง: Glickman &amp; Gordon (1987)</p>
+  </aside>
+</section>
+
+<section class="slide" data-act="II" data-part="theory" data-time="2" data-title="นิเทศอย่างไรให้มีหลักฐาน ไม่ใช่ความรู้สึก?">
+  <div class="head"><p class="kicker">Clinical Supervision</p><h2 class="t">นิเทศอย่างไรให้มีหลักฐาน ไม่ใช่ความรู้สึก?</h2></div>
+  <div style="display: flex; flex-direction: column;">
+    <div class="flow">
+      <div class="step"><span class="n" style="margin-bottom: 0.5rem;">1</span>ประชุมก่อนสังเกตการสอน</div><span class="arr">→</span>
+      <div class="step"><span class="n" style="margin-bottom: 0.5rem;">2</span>สังเกตการสอน</div><span class="arr">→</span>
+      <div class="step"><span class="n" style="margin-bottom: 0.5rem;">3</span>วิเคราะห์ข้อมูลและวางกลยุทธ์</div><span class="arr">→</span>
+      <div class="step"><span class="n" style="margin-bottom: 0.5rem;">4</span>ประชุมสะท้อนผล</div><span class="arr">→</span>
+      <div class="step"><span class="n" style="margin-bottom: 0.5rem;">5</span>วิเคราะห์กระบวนการนิเทศ</div>
+    </div>
+    <div class="loop" aria-hidden="true"></div>
+  </div>
+  <p class="banner" style="margin-top: 1rem;"><b>หลักการ:</b> สังเกตจริง → วิเคราะห์ร่วมกัน → ปรับปรุงการสอน</p>
+  <p class="src">Goldhammer (1969)</p>
+  <aside class="notes">
+    <p>“ต่อมาเป็นการนิเทศแบบคลินิก ซึ่งมีความสำคัญมากต่อการพัฒนาการสอนโดยใช้ข้อมูลจริงครับ</p>
+    <p>ลองคิดว่าหลังเข้าเยี่ยมชั้นเรียน ผู้นิเทศพูดกับครูเพียงว่า ‘ควรจัดกิจกรรมให้น่าสนใจมากกว่านี้’</p>
+    <p>คำแนะนำลักษณะนี้อาจทำให้ครูไม่ทราบว่าจะต้องปรับตรงไหน</p>
+    <p>Goldhammer เสนอกระบวนการนิเทศแบบคลินิกห้าขั้น</p>
+    <p>เริ่มจากการประชุมก่อนสังเกต เพื่อกำหนดประเด็นและวิธีเก็บข้อมูลร่วมกัน ตามด้วยการสังเกตการสอนและบันทึกข้อมูลที่เกิดขึ้นจริง</p>
+    <p>จากนั้นผู้นิเทศนำข้อมูลมาวิเคราะห์และเตรียมการสะท้อนผล ก่อนประชุมกับครูเพื่อพิจารณาสิ่งที่จะปรับปรุงร่วมกัน</p>
+    <p>ขั้นสุดท้ายคือการวิเคราะห์กระบวนการนิเทศ ว่ารอบนี้ช่วยครูได้หรือไม่</p>
+    <p>จุดเด่นจึงไม่ใช่การบอกครูว่าถูกหรือผิด แต่เป็นการใช้หลักฐานจากห้องเรียนสร้างการเรียนรู้ร่วมกันครับ”</p>
+    <p class="ref">อ้างอิง: Goldhammer (1969); Cogan (1973)</p>
+  </aside>
+</section>
+
+<section class="slide" data-act="II" data-part="theory" data-time="1.5" data-title="การนิเทศกับ PLC เหมือนหรือต่างกัน?">
+  <h2 class="t">การนิเทศกับ PLC เหมือนหรือต่างกัน?</h2>
+  <div class="g2 fill">
+    <div class="card"><span class="en">Supervision</span><ul><li>มีผู้นิเทศติดตามและช่วยเหลือครู</li><li>ใช้ข้อมูลพัฒนาการสอนรายบุคคล</li></ul></div>
+    <div class="card"><span class="en">Professional Learning Community</span><ul><li>ครูเรียนรู้ร่วมกันในกลุ่ม</li><li>ใช้ข้อมูลผู้เรียนเพื่อพัฒนาการสอน</li><li>มุ่งการเรียนรู้และผลลัพธ์ร่วมกัน</li></ul></div>
+  </div>
+  <p class="banner">PLC เป็นกลไกสนับสนุนการนิเทศ แต่ไม่ใช่สิ่งเดียวกัน</p>
+  <aside class="notes">
+    <p>“หลายสถานศึกษาใช้การนิเทศควบคู่กับ PLC หรือชุมชนการเรียนรู้ทางวิชาชีพ</p>
+    <p>คำถามคือ การจัดประชุม PLC ถือเป็นการนิเทศแล้วหรือไม่?</p>
+    <p>ตามแนวคิดในเอกสาร การนิเทศมีบทบาทของผู้นิเทศในการติดตามและสนับสนุนครูแต่ละคน ส่วน PLC เป็นกระบวนการที่กลุ่มครูเรียนรู้ร่วมกัน</p>
+    <p>DuFour อธิบายว่า PLC ให้ความสำคัญกับสามเรื่อง คือการทำให้ผู้เรียนได้เรียนรู้จริง การสร้างวัฒนธรรมการทำงานร่วมกัน และการมุ่งผลลัพธ์</p>
+    <p>ดังนั้น PLC สามารถใช้ต่อยอดข้อมูลจากการนิเทศได้ เช่น การนำปัญหาที่พบจากการสังเกตชั้นเรียนมาแลกเปลี่ยนกับเพื่อนครู</p>
+    <p>การนิเทศกับ PLC จึงสนับสนุนกัน แต่ไม่ควรใช้สองคำนี้แทนกันทั้งหมดครับ”</p>
+    <p class="ref">อ้างอิง: DuFour (2004); สุชัญญา ลือชา และคณะ (2569); อภิชาติ เนินพรหม (2566)</p>
+  </aside>
+</section>
+
+<section class="slide" data-act="II" data-part="theory" data-time="1.5" data-title="6 หลักการที่การนิเทศที่ดีควรมี">
+  <div class="head"><p class="kicker">Six Principles of Educational Supervision</p><h2 class="t">6 หลักการที่การนิเทศที่ดีควรมี</h2></div>
+  <div class="g6 fill" style="align-content: center;">
+    <div class="card"><div class="row"><span class="n">1</span><h3>ความเป็นประชาธิปไตย</h3></div></div>
+    <div class="card"><div class="row"><span class="n">2</span><h3>การมีส่วนร่วม</h3></div></div>
+    <div class="card"><div class="row"><span class="n">3</span><h3>ความเป็นระบบ</h3></div></div>
+    <div class="card"><div class="row"><span class="n">4</span><h3>ความต่อเนื่อง</h3></div></div>
+    <div class="card"><div class="row"><span class="n">5</span><h3>การใช้ข้อมูลเชิงประจักษ์</h3></div></div>
+    <div class="card"><div class="row"><span class="n">6</span><h3>การมุ่งพัฒนาคุณภาพผู้เรียน</h3></div></div>
+  </div>
+  <p class="banner"><b>หัวใจ:</b> การนิเทศต้องเป็นกระบวนการพัฒนา ไม่ใช่กิจกรรมครั้งเดียว</p>
+  <aside class="notes">
+    <p>“จากทฤษฎีที่เราได้ศึกษา คณะผู้จัดทำสังเคราะห์หลักการนิเทศไว้หกประการครับ</p>
+    <p>ความเป็นประชาธิปไตยหมายถึงการเคารพความคิดเห็นของครู</p>
+    <p>การมีส่วนร่วมหมายถึงการเปิดโอกาสให้ครูร่วมกำหนดเป้าหมายและวิธีการ</p>
+    <p>ความเป็นระบบคือการมีแผน ขั้นตอน ผู้รับผิดชอบ และเครื่องมือที่ชัดเจน</p>
+    <p>ความต่อเนื่องหมายถึงการติดตามและพัฒนาเป็นวงรอบ</p>
+    <p>การใช้ข้อมูลเชิงประจักษ์หมายถึงการอ้างอิงสิ่งที่เกิดขึ้นจริง ไม่ใช้ความรู้สึกเป็นหลัก</p>
+    <p>และข้อสุดท้ายคือการมุ่งคุณภาพผู้เรียน ซึ่งเป็นเป้าหมายปลายทาง</p>
+    <p>หลักการเหล่านี้ต้องทำงานร่วมกัน เพราะการมีระบบที่ดีแต่ขาดความร่วมมือ หรือการนิเทศอย่างต่อเนื่องแต่ไม่ติดตามผลผู้เรียน ก็ยังมีข้อจำกัดครับ”</p>
+    <p class="ref">อ้างอิง: การสังเคราะห์ของคณะผู้จัดทำ หัวข้อ 2.8</p>
+  </aside>
+</section>
+
+<section class="slide" data-act="II" data-part="theory" data-time="2" data-title="Output ไม่เท่ากับ Outcomes">
+  <div class="head"><p class="kicker">Systems Approach: IPOF + Outcomes</p><h2 class="t">Output ไม่เท่ากับ Outcomes</h2></div>
+  <div class="fill" style="display: flex; flex-direction: column; justify-content: center;">
+    <div class="flow">
+      <div class="step" style="flex-direction: column; display: flex; gap: 0.4rem;"><span class="en">Input</span>บุคลากร ข้อมูล เวลา ทรัพยากร</div><span class="arr">→</span>
+      <div class="step" style="flex-direction: column; display: flex; gap: 0.4rem;"><span class="en">Process</span>วางแผน นิเทศ สังเกต สะท้อนผล</div><span class="arr">→</span>
+      <div class="step" style="flex-direction: column; display: flex; gap: 0.4rem;"><span class="en">Output</span>ผลผลิตและข้อมูลการดำเนินงานนิเทศ</div><span class="arr">→</span>
+      <div class="step" style="flex-direction: column; display: flex; gap: 0.4rem; background: var(--band); color: var(--on-band); border-color: var(--band);"><span class="en" style="color: var(--on-band);">Outcomes</span>การเปลี่ยนแปลงของการสอนและการเรียนรู้</div>
+    </div>
+    <div class="loop"><span>FEEDBACK: นำข้อมูลกลับไปพัฒนาระบบ</span></div>
+  </div>
+  <aside class="notes">
+    <p>“หากต้องเลือกสไลด์หนึ่งที่ช่วยตอบคำถามเปิดเรื่องได้ชัดเจนที่สุด ผมคิดว่าสไลด์นี้สำคัญมากครับ</p>
+    <p>ทฤษฎีระบบมองว่าสถานศึกษาเป็นองค์การที่องค์ประกอบต่าง ๆ สัมพันธ์กัน และการนิเทศเป็นระบบย่อยหนึ่งของสถานศึกษา</p>
+    <p>ในเอกสารของกลุ่ม เราใช้กรอบ IPOF ซึ่งประกอบด้วยปัจจัยนำเข้า กระบวนการ ผลผลิต และข้อมูลย้อนกลับ แล้วเพิ่ม Outcomes เพื่อเน้นผลที่เกิดขึ้นจริงกับครูและผู้เรียน</p>
+    <p>สมมติว่าโรงเรียนดำเนินการนิเทศได้ตามแผนและมีแบบรายงานครบถ้วน นั่นเป็นข้อมูลสำคัญด้านผลผลิตและการดำเนินงาน</p>
+    <p>แต่ถ้าเราต้องการรู้ว่าครูเปลี่ยนวิธีสอนอย่างไร หรือผู้เรียนพัฒนาการอ่านได้มากน้อยเพียงใด เราต้องมีข้อมูลอีกระดับหนึ่ง</p>
+    <p>เพราะฉะนั้น Output กับ Outcomes เกี่ยวข้องกัน แต่ไม่ใช่สิ่งเดียวกัน</p>
+    <p>และข้อมูลที่เก็บได้ควรส่งกลับไปปรับปรุงการนิเทศครั้งต่อไป ไม่ควรหยุดอยู่ที่การจัดทำรายงานครับ”</p>
+    <p class="ref">อ้างอิง: von Bertalanffy (1968); Hoy &amp; Miskel (2013); แผนภาพ IPOF และ Outcomes ของคณะผู้จัดทำ</p>
+  </aside>
+</section>
+
+<section class="slide" data-act="II" data-part="theory" data-time="1.5" data-title="PIDRE: กระบวนการนิเทศอย่างเป็นระบบ">
+  <div class="head"><p class="kicker">PIDRE — Five-Step Supervision Process</p><h2 class="t">PIDRE: กระบวนการนิเทศอย่างเป็นระบบ</h2></div>
+  <div class="letters fill" style="align-content: center;">
+    <div class="letter"><b>P</b><span class="en">Planning</span><span>วางแผน</span></div>
+    <div class="letter"><b>I</b><span class="en">Informing</span><span>ให้ความรู้ก่อนดำเนินการ</span></div>
+    <div class="letter"><b>D</b><span class="en">Doing</span><span>ดำเนินการนิเทศ</span></div>
+    <div class="letter"><b>R</b><span class="en">Reinforcing</span><span>เสริมกำลังใจ</span></div>
+    <div class="letter"><b>E</b><span class="en">Evaluating</span><span>ประเมินผล</span></div>
+  </div>
+  <p class="banner soft">กระบวนการที่ต่อเนื่อง และใช้ข้อมูลเพื่อการปรับปรุง</p>
+  <aside class="notes">
+    <p>“PIDRE เป็นอีกแนวทางหนึ่งที่ทำให้หลักการนิเทศถูกแปลงเป็นกระบวนการทำงานที่เป็นขั้นตอน</p>
+    <p>ตามแนวคิดของสงัด อุทรานันท์ ซึ่งเอกสารของกลุ่มอ้างผ่านงานวิจัยของอังคณา นาสารี และคณะ กระบวนการนี้ประกอบด้วยห้าขั้น</p>
+    <p>เริ่มจาก Planning คือการวางแผน</p>
+    <p>Informing คือการให้ความรู้และเตรียมความพร้อมก่อนดำเนินการ</p>
+    <p>Doing คือการปฏิบัติการนิเทศ</p>
+    <p>Reinforcing คือการเสริมกำลังใจ สนับสนุน และยอมรับความก้าวหน้า</p>
+    <p>สุดท้าย Evaluating คือการประเมินผล แล้วนำสิ่งที่ได้กลับไปพัฒนาการดำเนินงานต่อ</p>
+    <p>สิ่งที่น่าสนใจคือ PIDRE ไม่ได้ให้ความสำคัญเฉพาะการลงมือปฏิบัติ แต่ยังให้ความสำคัญกับการเสริมกำลังใจและการประเมิน</p>
+    <p>ช่วง Innovation เราจะเห็นว่าคณะผู้จัดทำนำกระบวนการนี้ไปใช้เป็นแกนของแบบจำลอง PIDRE-D อย่างไรครับ”</p>
+    <p class="ref">อ้างอิง: สงัด อุทรานันท์ (2530 อ้างถึงใน อังคณา นาสารี และคณะ, 2569); อลงกรณ์ สุขวัน และคณะ (2567)</p>
+  </aside>
+</section>
+
+<section class="slide" data-act="II" data-part="theory" data-time="1" data-title="จากห้องเรียน กลับไปสู่การพัฒนาหลักสูตร">
+  <div class="head"><p class="kicker">Curriculum–Supervision Feedback Cycle</p><h2 class="t">จากห้องเรียน กลับไปสู่การพัฒนาหลักสูตร</h2></div>
+  <div class="cycle fill">
+    <div class="ret" aria-hidden="true"></div>
+    <div class="vchain" style="justify-content: center;">
+      <div class="box solid"><b>หลักสูตรสถานศึกษา</b></div>
+      <div class="down">↓</div>
+      <div class="flow"><div class="step">ออกแบบหน่วยการเรียนรู้</div><span class="arr">→</span><div class="step">จัดการเรียนการสอน</div><span class="arr">→</span><div class="step">วัดและประเมินผล</div></div>
+      <div class="down">↓</div>
+      <div class="box"><b>นิเทศและสะท้อนผล</b></div>
+      <div class="down">↓</div>
+      <div class="box"><b>ปรับการสอนและพัฒนาหลักสูตร</b></div>
+    </div>
+  </div>
+  <aside class="notes">
+    <p>“ทฤษฎีสุดท้ายที่เราจะเชื่อมโยง คือความสัมพันธ์ระหว่างการนิเทศกับการพัฒนาหลักสูตรครับ</p>
+    <p>หลักสูตรกำหนดว่าผู้เรียนควรเรียนรู้อะไร ครูนำหลักสูตรไปออกแบบกิจกรรมและประเมินผล ส่วนการนิเทศช่วยตรวจสอบว่าสิ่งที่หลักสูตรกำหนดเกิดขึ้นจริงในห้องเรียนหรือไม่</p>
+    <p>ตัวอย่างในเอกสารคือการอ่านจับใจความของนักเรียน ป.6 หากพบว่ากิจกรรมการสอนยังเน้นตอบคำถามมากกว่าการฝึกสรุปความ ข้อมูลนี้ควรนำกลับไปพิจารณาปรับหน่วยการเรียนรู้ เวลา หรือเกณฑ์การประเมินด้วย</p>
+    <p>เมื่อเราเข้าใจแนวคิดเหล่านี้แล้ว ต่อไปเราจะเข้าสู่กรณีศึกษาจริง เพื่อดูว่าสถานศึกษาดำเนินการนิเทศภายในอย่างไรครับ”</p>
+    <p class="ref">อ้างอิง: Glickman et al. (2009); เอกสารวิชาการกลุ่มที่ 1 หัวข้อ 2.10</p>
+  </aside>
+</section>
+
+<!-- ======================= ACT III ======================= -->
+<section class="slide" data-act="III" data-part="practice" data-time="1.5" data-title="เมื่อการนิเทศเกิดขึ้นในสถานศึกษาจริง">
+  <div class="head"><p class="kicker">Case Study: โรงเรียนบ้านสุไหงโก-ลก</p><h2 class="t">เมื่อการนิเทศเกิดขึ้นในสถานศึกษาจริง</h2></div>
+  <p class="lead mute" style="font-size: 1.45rem;">สังกัดสำนักงานเขตพื้นที่การศึกษาประถมศึกษานราธิวาส เขต 2</p>
+  <div class="g3 fill" style="align-content: center;">
+    <div class="card stat"><div class="v" style="font-size: 5.4rem;">1,581 <span style="font-size: 2rem;">คน</span></div><div class="l">นักเรียนทั้งหมด</div></div>
+    <div class="card stat"><div class="v" style="font-size: 5.4rem;">105 <span style="font-size: 2rem;">คน</span></div><div class="l">ครูและบุคลากร</div></div>
+    <div class="card stat"><div class="v" style="font-size: 5.4rem;">80 <span style="font-size: 2rem;">คน</span></div><div class="l">นักเรียนที่มีความต้องการจำเป็นพิเศษ ระดับ ป.3–ป.6</div></div>
+  </div>
+  <p class="banner"><b>บริบทสำคัญ:</b> การจัดการศึกษาแบบเรียนรวม</p>
+  <p class="src" style="margin-top: 0;">ข้อมูลปีการศึกษา 2569</p>
+  <aside class="notes">
+    <p>“หลังจากศึกษาทฤษฎีแล้ว เราจะเข้าสู่กรณีศึกษาโรงเรียนบ้านสุไหงโก-ลก จังหวัดนราธิวาสครับ</p>
+    <p>โรงเรียนแห่งนี้สังกัดสำนักงานเขตพื้นที่การศึกษาประถมศึกษานราธิวาส เขต 2</p>
+    <p>ตามข้อมูลปีการศึกษา 2569 โรงเรียนมีนักเรียนระดับก่อนประถมศึกษา 340 คน ระดับประถมศึกษา 1,241 คน รวมทั้งสิ้น 1,581 คน และมีครูกับบุคลากรรวม 105 คน</p>
+    <p>อีกประเด็นที่สำคัญคือโรงเรียนจัดการศึกษาแบบเรียนรวม โดยมีนักเรียนที่มีความต้องการจำเป็นพิเศษในระดับชั้น ป.3 ถึง ป.6 จำนวน 80 คน</p>
+    <p>บริบทนี้ทำให้เป้าหมายของการนิเทศภายในไม่ได้มุ่งเพียงตรวจสอบว่าครูจัดกิจกรรมตามแผนหรือไม่ แต่ต้องสนับสนุนให้ครูออกแบบการเรียนรู้ที่ตอบสนองความแตกต่างระหว่างบุคคล</p>
+    <p>เมื่อบริบทผู้เรียนมีความหลากหลาย ระบบนิเทศก็ต้องช่วยครูรับมือกับความหลากหลายนั้นด้วยครับ”</p>
+    <p class="ref">อ้างอิง: ข้อมูลกรณีศึกษาจากสมาชิกกลุ่ม ปีการศึกษา 2569, หัวข้อ 3.1</p>
+  </aside>
+</section>
+
+<section class="slide" data-act="III" data-part="practice" data-time="1.5" data-title="ใครเป็นผู้ขับเคลื่อนการนิเทศภายใน?">
+  <div class="head"><p class="kicker">Internal Supervision Structure</p><h2 class="t">ใครเป็นผู้ขับเคลื่อนการนิเทศภายใน?</h2></div>
+  <div class="g2 fill" style="grid-template-columns: 1.6fr 1fr; align-items: center;">
+    <div class="vchain">
+      <div class="box solid"><b>ผู้อำนวยการสถานศึกษา</b>กำกับนโยบายและติดตามภาพรวม</div>
+      <div class="down">↓</div>
+      <div class="box"><b>กลุ่มบริหารงานวิชาการ</b>รับผิดชอบหลักด้านการนิเทศ</div>
+      <div class="down">↓</div>
+      <div class="box"><b>รองผู้อำนวยการประจำสายชั้น / หัวหน้าหรือรองหัวหน้ากลุ่มสาระ</b>ร่วมดำเนินการนิเทศ</div>
+      <div class="down">↓</div>
+      <div class="box"><b>ครูผู้สอนทุกคน</b>ผู้รับการนิเทศ</div>
+    </div>
+    <div class="card soft stat" style="gap: 1.2rem;">
+      <div><div class="v" style="font-size: 4.4rem;">2 ครั้ง</div><div class="l">/ภาคเรียน</div></div>
+      <div style="border-top: 1px solid var(--line); padding-top: 1.2rem;"><div class="v" style="font-size: 4.4rem;">4 ครั้ง</div><div class="l">/ปีการศึกษา</div></div>
+    </div>
+  </div>
+  <aside class="notes">
+    <p>“โรงเรียนกำหนดโครงสร้างการนิเทศภายในไว้อย่างชัดเจนครับ</p>
+    <p>ผู้อำนวยการสถานศึกษารับผิดชอบด้านนโยบายและติดตามภาพรวม</p>
+    <p>กลุ่มบริหารงานวิชาการเป็นผู้รับผิดชอบหลักในการประสานและดำเนินงาน</p>
+    <p>ส่วนผู้ร่วมดำเนินการนิเทศประกอบด้วยรองผู้อำนวยการประจำสายชั้น และหัวหน้าหรือรองหัวหน้ากลุ่มสาระการเรียนรู้</p>
+    <p>ครูผู้สอนทุกคนอยู่ในกลุ่มเป้าหมายของการนิเทศ โดยมีแผนดำเนินการภาคเรียนละสองครั้ง หรือปีการศึกษาละสี่ครั้ง</p>
+    <p>หากเชื่อมกลับไปยังทฤษฎีระบบ จะเห็นว่าโรงเรียนมีการกำหนดบทบาทและผู้รับผิดชอบที่สัมพันธ์กัน</p>
+    <p>แต่การกำหนดโครงสร้างที่ดีเพียงอย่างเดียวยังไม่เพียงพอ เราต้องพิจารณาต่อว่ากระบวนการนิเทศที่เกิดขึ้นจริงเป็นอย่างไร”</p>
+    <p class="ref">อ้างอิง: เอกสารวิชาการกลุ่มที่ 1 หัวข้อ 3.1</p>
+  </aside>
+</section>
+
+<section class="slide" data-act="III" data-part="practice" data-time="2" data-title="ระบบนิเทศภายในดำเนินงานอย่างไร?">
+  <div class="head"><p class="kicker">6 ขั้นตอนการนิเทศภายใน</p><h2 class="t">ระบบนิเทศภายในดำเนินงานอย่างไร?</h2></div>
+  <div class="g6 fill" style="align-content: center;">
+    <div class="card"><div class="row"><span class="n">1</span><h3>ประชุมเตรียมความพร้อม</h3></div></div>
+    <div class="card"><div class="row"><span class="n">2</span><h3>วิเคราะห์ผู้เรียนรายบุคคล</h3></div></div>
+    <div class="card"><div class="row"><span class="n">3</span><h3>เยี่ยมชั้นเรียนและสังเกตการสอน</h3></div></div>
+    <div class="card"><div class="row"><span class="n">4</span><h3>บันทึกผลในระบบออนไลน์</h3></div></div>
+    <div class="card"><div class="row"><span class="n">5</span><h3>ครูพัฒนาตนเองและปรับปรุงการสอน</h3></div></div>
+    <div class="card"><div class="row"><span class="n">6</span><h3>แลกเปลี่ยนเรียนรู้ใน PLC</h3></div></div>
+  </div>
+  <div class="row" style="flex-wrap: wrap; gap: 0.7rem;">
+    <span class="en" style="margin-right: 0.5rem;">เครื่องมือสนับสนุน</span>
+    <span class="chip" style="font-size: 1.2rem; padding: 0.4rem 1rem;">ระบบจองตารางนิเทศ</span>
+    <span class="chip" style="font-size: 1.2rem; padding: 0.4rem 1rem;">แบบบันทึก</span>
+    <span class="chip" style="font-size: 1.2rem; padding: 0.4rem 1rem;">ระบบรายงานผล</span>
+  </div>
+  <aside class="notes">
+    <p>“ระบบการนิเทศของโรงเรียนมีทั้งหมดหกขั้นตอนครับ</p>
+    <p>ขั้นแรกคือการประชุมเตรียมความพร้อม ชี้แจงแนวทาง และวางแผน</p>
+    <p>ขั้นที่สองคือการวิเคราะห์ผู้เรียนรายบุคคล ซึ่งเป็นจุดเด่นที่สำคัญ เพราะทำให้ครูและผู้นิเทศทราบลักษณะของผู้เรียนก่อนเข้าสู่การสังเกตการสอน</p>
+    <p>ขั้นที่สามคือการเยี่ยมชั้นเรียน สังเกตการสอน และให้ข้อเสนอแนะ</p>
+    <p>ขั้นที่สี่เป็นการบันทึกผลผ่านระบบออนไลน์ โดยโรงเรียนมีทั้งระบบจองตารางนิเทศและระบบรายงานผลสนับสนุน</p>
+    <p>ขั้นที่ห้าคือการให้ครูนำข้อเสนอแนะไปพัฒนาตนเองและปรับปรุงการสอน</p>
+    <p>และขั้นที่หกคือการแลกเปลี่ยนเรียนรู้ร่วมกันใน PLC</p>
+    <p>เมื่อพิจารณาในเชิงทฤษฎี เราจะเห็นองค์ประกอบที่เชื่อมโยงกับการนิเทศแบบคลินิกและการนิเทศแบบร่วมพัฒนา</p>
+    <p>อย่างไรก็ตาม สิ่งที่เราต้องตรวจสอบต่อไปคือข้อมูลจากแต่ละขั้นสามารถนำไปใช้ประเมินความก้าวหน้าของผู้เรียนได้มากน้อยเพียงใด”</p>
+    <p class="ref">อ้างอิง: เอกสารวิชาการกลุ่มที่ 1 หัวข้อ 3.1</p>
+  </aside>
+</section>
+
+<section class="slide" data-act="III" data-part="practice" data-time="2" data-title="เมื่อโจทย์สำคัญอยู่ที่การอ่านจับใจความของนักเรียน ป.6">
+  <div class="head"><p class="kicker">Reading Comprehension: ปัญหาที่ต้องพัฒนา</p><h2 class="t">เมื่อโจทย์สำคัญอยู่ที่การอ่านจับใจความของนักเรียน ป.6</h2></div>
+  <div class="fill" style="display: flex; flex-direction: column; justify-content: center; gap: 0.8rem;">
+    <div class="card" style="padding: 0.9rem 1.5rem;"><p>จับใจความสำคัญจากเรื่องที่อ่านไม่ได้</p></div>
+    <div class="card" style="padding: 0.9rem 1.5rem;"><p>แยกประเด็นสำคัญกับรายละเอียดสนับสนุนไม่ชัด</p></div>
+    <div class="card" style="padding: 0.9rem 1.5rem;"><p>สรุปเรื่องด้วยภาษาของตนเองไม่ได้</p></div>
+    <div class="card" style="padding: 0.9rem 1.5rem;"><p>ขาดแรงจูงใจในการอ่าน</p></div>
+    <div class="card soft" style="padding: 0.9rem 1.5rem;"><p style="font-weight: 600; color: var(--deep);">กิจกรรมการสอนเน้นตอบคำถามมากกว่าฝึกคิดวิเคราะห์</p></div>
+  </div>
+  <p class="banner"><b>คำถาม:</b> การนิเทศจะช่วยครูปรับวิธีสอนอย่างไร?</p>
+  <aside class="notes">
+    <p>“เมื่อเข้าไปดูโจทย์การพัฒนาของโรงเรียน พบว่าหนึ่งในประเด็นสำคัญคือทักษะการอ่านจับใจความของนักเรียนชั้นประถมศึกษาปีที่ 6 ครับ</p>
+    <p>เอกสารระบุปัญหาทั้งการจับประเด็นสำคัญไม่ได้ การแยกใจความหลักจากรายละเอียดสนับสนุนไม่ชัด และการสรุปเรื่องด้วยภาษาของตนเองไม่ได้</p>
+    <p>นอกจากนี้ยังมีปัญหาเรื่องแรงจูงใจในการอ่าน</p>
+    <p>แต่ประเด็นที่เกี่ยวข้องกับการนิเทศโดยตรงคือกิจกรรมการเรียนรู้บางส่วนยังเน้นการตอบคำถาม มากกว่าการให้ผู้เรียนฝึกคิดวิเคราะห์และสรุปความ</p>
+    <p>เมื่อเรามองแบบนี้ ปัญหาการอ่านไม่ใช่เรื่องที่ต้องแก้เฉพาะตัวผู้เรียน แต่ยังเกี่ยวข้องกับการออกแบบกิจกรรมของครูด้วย</p>
+    <p>จึงเกิดคำถามว่า ระบบนิเทศจะเข้าไปสนับสนุนครูอย่างไรให้สามารถเปลี่ยนกิจกรรมการเรียนรู้ไปสู่การพัฒนาทักษะการอ่านได้จริง”</p>
+    <p class="ref">อ้างอิง: เอกสารวิชาการกลุ่มที่ 1 หัวข้อ 3.2 และ 4.1</p>
+  </aside>
+</section>
+
+<section class="slide" data-act="III" data-part="practice" data-time="2" data-title="โรงเรียนวางแนวทางพัฒนาการอ่านไว้อย่างไร?">
+  <div class="head"><p class="kicker">Reading Development Approach</p><h2 class="t">โรงเรียนวางแนวทางพัฒนาการอ่านไว้อย่างไร?</h2></div>
+  <div class="g3 fill">
+    <div class="card"><h3>การจัดการเรียนรู้</h3><ul><li>ฝึกอ่านวันละ 10–15 นาที</li><li>ใช้เทคนิค 5W1H</li><li>เกมและ Mind Map</li><li>Active Learning</li></ul></div>
+    <div class="card solid"><h3>การสนับสนุนครู</h3><ul style="color: var(--on-band);"><li>Coaching &amp; Mentoring</li><li>นิเทศเพื่อพัฒนา ไม่ใช่จับผิดการสอน</li></ul></div>
+    <div class="card"><h3>การประเมินที่วางไว้</h3><ul><li>แบบทดสอบก่อน–หลังเรียน</li><li>แบบประเมินทักษะ ชิ้นงาน และพฤติกรรม</li></ul></div>
+  </div>
+  <aside class="notes">
+    <p>“โรงเรียนใช้หลักการสำคัญว่า ‘นิเทศเพื่อพัฒนา ไม่ใช่จับผิดการสอน’ ครับ</p>
+    <p>ในด้านการจัดการเรียนรู้ เอกสารระบุแนวทางพัฒนาการอ่านจับใจความหลายวิธี</p>
+    <p>เริ่มจากการฝึกอ่านวันละ 10 ถึง 15 นาที การใช้เทคนิค 5W1H เพื่อช่วยให้ผู้เรียนตั้งคำถามและทำความเข้าใจเนื้อหา การใช้เกมและแผนผังความคิด รวมถึงการจัดกิจกรรมแบบ Active Learning</p>
+    <p>ในด้านการพัฒนาครู โรงเรียนเน้นการโค้ชและการเป็นพี่เลี้ยง เพื่อให้ผู้นิเทศติดตามและให้คำแนะนำ</p>
+    <p>ส่วนด้านการประเมิน มีการวางแนวทางใช้แบบทดสอบก่อนและหลังเรียน แบบประเมินทักษะการอ่าน ชิ้นงาน และการสังเกตพฤติกรรม</p>
+    <p>อย่างไรก็ตาม เราต้องแยกสองเรื่องให้ชัดครับ คือแนวทางที่โรงเรียนวางไว้ กับผลการเรียนรู้ที่ได้รับการตรวจสอบแล้ว</p>
+    <p>เพราะจากข้อมูลในเอกสาร ผลการอ่านยังอยู่ในส่วนของผลที่คาดว่าจะได้รับ จึงยังไม่สามารถสรุปได้ว่ากิจกรรมทั้งหมดทำให้ทักษะการอ่านดีขึ้นมากน้อยเพียงใด”</p>
+    <p class="ref">อ้างอิง: เอกสารวิชาการกลุ่มที่ 1 หัวข้อ 3.2</p>
+  </aside>
+</section>
+
+<section class="slide" data-act="III" data-part="practice" data-time="2" data-title="การนิเทศดำเนินงานได้ดี แล้วผลการอ่านล่ะ?">
+  <h2 class="t">การนิเทศดำเนินงานได้ดี แล้วผลการอ่านล่ะ?</h2>
+  <div class="g2 fill">
+    <div class="card" style="gap: 1rem;">
+      <h3>สิ่งที่มีข้อมูลรายงาน</h3>
+      <div class="stat row" style="gap: 1.2rem; align-items: baseline;"><div class="v" style="font-size: 3.4rem; min-width: 10.5rem;">103/105</div><div class="l" style="margin: 0;">คน ได้รับการนิเทศ</div></div>
+      <div class="stat row" style="gap: 1.2rem; align-items: baseline;"><div class="v" style="font-size: 3.4rem; min-width: 10.5rem;">98.1%</div><div class="l" style="margin: 0;">ความครอบคลุมตามรายงาน</div></div>
+      <div class="stat row" style="gap: 1.2rem; align-items: baseline;"><div class="v" style="font-size: 3.4rem; min-width: 10.5rem;">88.02%</div><div class="l" style="margin: 0;">ค่าเฉลี่ยผลประเมินการนิเทศ อยู่ในระดับดี</div></div>
+    </div>
+    <div class="card dash">
+      <h3 style="color: var(--amber);">สิ่งที่ยังไม่มีข้อมูลเพียงพอ</h3>
+      <ul><li>ผลการอ่านก่อน–หลังเรียนที่นำมาเปรียบเทียบได้</li><li>ข้อมูลยืนยันพัฒนาการการอ่านของผู้เรียน</li><li>ความคิดเห็นของครูผู้รับการนิเทศ</li></ul>
+    </div>
+  </div>
+  <p class="banner"><b>ข้อค้นพบ:</b> ผลการดำเนินงาน ≠ ผลการเรียนรู้</p>
+  <aside class="notes">
+    <p>“เมื่อมาถึงผลการดำเนินงาน โรงเรียนรายงานข้อมูลสำคัญสองชุดครับ</p>
+    <p>ชุดแรกคือครูได้รับการนิเทศ 103 จากฐาน 105 คน คิดเป็นร้อยละ 98.1</p>
+    <p>ชุดที่สองคือค่าเฉลี่ยผลประเมินการนิเทศร้อยละ 88.02 ซึ่งอยู่ในระดับดีตามระบบรายงานของโรงเรียน</p>
+    <p>ข้อมูลนี้สามารถใช้สะท้อนความครอบคลุมและผลประเมินตามระบบการนิเทศได้</p>
+    <p>แต่เมื่อถามว่า นักเรียน ป.6 มีทักษะการอ่านจับใจความสูงขึ้นเท่าไร เอกสารยังไม่มีตัวเลขผลการอ่านก่อนและหลังที่นำมาเปรียบเทียบได้</p>
+    <p>ข้อมูลกรณีศึกษายังมาจากฝั่งโรงเรียน และยังไม่มีความคิดเห็นของครูผู้รับการนิเทศ</p>
+    <p>เมื่อเทียบกระบวนการกับ PIDRE เอกสารยังวิเคราะห์ว่าขั้นการเสริมกำลังใจ และการประเมินผลที่ระดับผู้เรียน ไม่ได้ปรากฏเป็นขั้นแยกอย่างชัดเจน</p>
+    <p>ดังนั้น ประเด็นนี้ไม่ได้แปลว่าการนิเทศไม่มีคุณภาพ แต่สะท้อนว่าระบบยังมีช่องว่างด้านข้อมูลและกระบวนการที่สามารถพัฒนาต่อได้</p>
+    <p>ต่อไปเราจะใช้แนวคิดที่ศึกษามาวิเคราะห์ช่องว่างเหล่านี้ให้ลึกขึ้นครับ”</p>
+    <p class="ref">อ้างอิง: เอกสารวิชาการกลุ่มที่ 1 หัวข้อ 3.2</p>
+  </aside>
+</section>
+
+<!-- ======================= ACT IV ======================= -->
+<section class="slide" data-act="IV" data-part="problem" data-time="2" data-title="ปัญหาการอ่านเกิดจากอะไร?">
+  <div class="head"><p class="kicker">Root Cause Analysis</p><h2 class="t">ปัญหาการอ่านเกิดจากอะไร?</h2></div>
+  <div class="g3 fill">
+    <div class="card"><h3>ด้านผู้เรียน</h3><ul><li>พื้นฐานต่างกัน</li><li>ขาดแรงจูงใจ</li><li>ทักษะวิเคราะห์ยังเป็นข้อท้าทาย</li></ul></div>
+    <div class="card"><h3>ด้านครูผู้สอน</h3><ul><li>กิจกรรมเน้นตอบคำถาม</li><li>สื่อไม่หลากหลาย</li><li>ขาดเทคนิคส่งเสริมการคิด</li></ul></div>
+    <div class="card"><h3>ด้านการจัดการเรียนรู้</h3><ul><li>ฝึกอ่านต่อเนื่องไม่เพียงพอ</li><li>กิจกรรมไม่ตอบสนองผู้เรียนรายบุคคล</li></ul></div>
+  </div>
+  <p class="banner soft">การพัฒนาต้องมองปัจจัยที่สัมพันธ์กัน</p>
+  <aside class="notes">
+    <p>“จากกรณีศึกษาที่ผ่านมา เราจะเห็นว่าปัญหาการอ่านจับใจความมีหลายปัจจัยเกี่ยวข้องกันครับ</p>
+    <p>คณะผู้จัดทำแบ่งการวิเคราะห์ออกเป็นสามด้าน</p>
+    <p>ด้านแรกคือผู้เรียน ซึ่งมีพื้นฐานทักษะการอ่านแตกต่างกัน บางส่วนขาดแรงจูงใจและทักษะการคิดวิเคราะห์</p>
+    <p>ด้านที่สองคือครูผู้สอน โดยเอกสารระบุว่ากิจกรรมบางส่วนยังเน้นการตอบคำถาม สื่อที่ใช้ยังไม่หลากหลาย และครูต้องการเทคนิคส่งเสริมการคิดวิเคราะห์เพิ่มเติม</p>
+    <p>ด้านที่สามคือการจัดการเรียนรู้ ผู้เรียนยังมีโอกาสฝึกอ่านจับใจความอย่างต่อเนื่องไม่เพียงพอ และกิจกรรมบางส่วนยังไม่ตอบสนองความแตกต่างระหว่างบุคคล</p>
+    <p>ประเด็นสำคัญคือเราไม่ควรสรุปว่าปัญหาเกิดจากครูหรือผู้เรียนฝ่ายเดียว เพราะปัจจัยเหล่านี้มีความเกี่ยวข้องกัน</p>
+    <p>และนี่เป็นการวิเคราะห์จากข้อมูลกรณีศึกษา ไม่ใช่ผลการทดลองที่พิสูจน์ความเป็นเหตุเป็นผลของแต่ละปัจจัยครับ”</p>
+    <p class="ref">อ้างอิง: เอกสารวิชาการกลุ่มที่ 1 หัวข้อ 4.1–4.3</p>
+  </aside>
+</section>
+
+<section class="slide" data-act="IV" data-part="problem" data-time="2" data-title="เมื่อจำนวนงานนิเทศมากกว่าเวลาที่จะติดตามเชิงลึก">
+  <div class="head"><p class="kicker">5 ข้อจำกัดในการนิเทศ</p><h2 class="t">เมื่อจำนวนงานนิเทศมากกว่าเวลาที่จะติดตามเชิงลึก</h2></div>
+  <div class="g2 fill" style="grid-template-columns: 1.25fr 1fr; align-items: center;">
+    <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+      <div class="row"><span class="n">1</span><span style="font-size: 1.4rem;">เวลาและภาระงานของครู</span></div>
+      <div class="row"><span class="n">2</span><span style="font-size: 1.4rem;">สื่อการเรียนรู้ไม่หลากหลาย</span></div>
+      <div class="row"><span class="n">3</span><span style="font-size: 1.4rem;">พื้นฐานผู้เรียนแตกต่างกัน</span></div>
+      <div class="row"><span class="n">4</span><span style="font-size: 1.4rem;">ภาระงานหลายด้านของผู้นิเทศ</span></div>
+      <div class="row"><span class="n">5</span><span style="font-size: 1.4rem;">ผลการอ่านต้องใช้เวลาติดตาม</span></div>
+    </div>
+    <div class="card soft stat" style="padding: 2rem;">
+      <div class="v" style="font-size: 2rem; color: var(--mute); font-weight: 600;">ประมาณ</div>
+      <div class="v" style="font-size: 7rem;">210 <span style="font-size: 2rem;">ครั้ง/ภาคเรียน</span></div>
+      <div class="l" style="font-family: var(--mono); color: var(--deep); font-weight: 600;">105 คน × 2 ครั้ง</div>
+      <div class="l" style="margin-top: 0.2rem;">จำนวนการเยี่ยมชั้นเรียนตามแผนที่คำนวณจากฐาน 105 คน และการนิเทศ 2 ครั้ง</div>
+    </div>
+  </div>
+  <aside class="notes">
+    <p>“ในมุมของการบริหารสถานศึกษา ข้อจำกัดเรื่องเวลาถือเป็นประเด็นที่สำคัญครับ</p>
+    <p>เอกสารวิเคราะห์ว่า หากใช้ฐาน 105 คน และมีการนิเทศภาคเรียนละสองครั้ง จะคิดเป็นการเยี่ยมชั้นเรียนประมาณ 210 ครั้งต่อภาคเรียนตามแผน</p>
+    <p>ตัวเลขนี้ไม่ได้บอกว่าโรงเรียนเยี่ยมชั้นเรียนครบ 210 ครั้งจริง แต่ช่วยให้เห็นขนาดภาระงานที่ระบบต้องรองรับ</p>
+    <p>ขณะเดียวกันครูก็มีภาระงานสอนและงานอื่น ผู้นิเทศมีความรับผิดชอบหลายด้าน ทำให้การติดตามครูแต่ละคนอย่างต่อเนื่องอาจทำได้จำกัด</p>
+    <p>ยังมีเรื่องความแตกต่างของผู้เรียน สื่อที่ใช้ส่งเสริมการอ่าน และระยะเวลาที่จำเป็นต่อการเห็นผลการพัฒนาทักษะ</p>
+    <p>ดังนั้น การพัฒนาระบบนิเทศอาจไม่ใช่การเพิ่มจำนวนครั้งเข้าไปอีก แต่ต้องพิจารณาวิธีจัดสรรการช่วยเหลือให้เหมาะกับความต้องการของครูและข้อจำกัดของสถานศึกษาด้วยครับ”</p>
+    <p class="ref">อ้างอิง: เอกสารวิชาการกลุ่มที่ 1 หัวข้อ 4.4–4.5</p>
+  </aside>
+</section>
+
+<section class="slide" data-act="IV" data-part="problem" data-time="2" data-title="เมื่อผู้บริหารเป็นทั้งผู้ช่วยเหลือและผู้ประเมิน">
+  <div class="head"><p class="kicker">Role Conflict in Educational Supervision</p><h2 class="t">เมื่อผู้บริหารเป็นทั้งผู้ช่วยเหลือและผู้ประเมิน</h2></div>
+  <div class="fill" style="display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 1.4rem; align-items: center;">
+    <div class="card"><span class="en">Supervision for Development</span><ul><li>รับฟังปัญหา</li><li>ให้คำปรึกษา</li><li>สะท้อนผลและช่วยเหลือ</li></ul></div>
+    <div style="font-size: 3rem; color: var(--amber); font-weight: 700;" aria-hidden="true">⇄</div>
+    <div class="card"><span class="en">Performance Evaluation</span><ul><li>ประเมินตามหลักเกณฑ์</li><li>ตรวจสอบผลการปฏิบัติงาน</li><li>ใช้ข้อมูลประกอบการตัดสินผล</li></ul></div>
+  </div>
+  <p class="banner warn"><b>ความเสี่ยง:</b> ครูอาจไม่กล้าเปิดเผยปัญหาจริง</p>
+  <aside class="notes">
+    <p>“นอกจากข้อจำกัดด้านทรัพยากรแล้ว ยังมีอีกประเด็นหนึ่งที่สำคัญต่อความสัมพันธ์ระหว่างผู้นิเทศกับผู้รับการนิเทศ นั่นคือบทบาทซ้อนของผู้บริหารครับ</p>
+    <p>ผู้บริหารอาจทำหน้าที่ช่วยเหลือและนิเทศครู ขณะเดียวกันก็มีบทบาทในการประเมินผลการปฏิบัติงานตามหลักเกณฑ์ที่เกี่ยวข้อง</p>
+    <p>เมื่อครูไม่แน่ใจว่าข้อมูลที่ตนเปิดเผยจะถูกนำไปใช้เพื่อช่วยเหลือหรือใช้ประกอบการประเมิน ก็อาจทำให้ไม่กล้าพูดถึงปัญหาการสอนอย่างตรงไปตรงมา</p>
+    <p>เอกสารของกลุ่มจึงเสนอให้แยกข้อมูลการนิเทศเพื่อพัฒนาออกจากข้อมูลที่ใช้ประเมิน PA ให้ชัดเจน</p>
+    <p>ประเด็นนี้เชื่อมกับแนวคิดมนุษยสัมพันธ์และการเรียนรู้ของผู้ใหญ่ เพราะการพัฒนาจะเกิดขึ้นได้ดีเมื่อครูมีความไว้วางใจและมีส่วนร่วมในกระบวนการ</p>
+    <p>อย่างไรก็ตาม เราไม่ได้กล่าวว่าครูทุกคนในกรณีศึกษามีความกังวลเช่นนี้ แต่กำลังวิเคราะห์ความเสี่ยงที่ผู้บริหารควรให้ความสำคัญครับ”</p>
+    <p class="ref">อ้างอิง: Harris (1985); ธมลวรรณ พูนวัฒนานุกูล และบรรจบ บุญจันทร์ (2568); เอกสารหัวข้อ 2.9</p>
+  </aside>
+</section>
+
+<section class="slide" data-act="IV" data-part="problem" data-time="2" data-title="3 ช่องว่างที่ระบบนิเทศต้องตอบให้ได้">
+  <h2 class="t">3 ช่องว่างที่ระบบนิเทศต้องตอบให้ได้</h2>
+  <div class="g3 fill">
+    <div class="card"><span class="en">Gap 1 — Different Needs</span><h3 style="font-size: 1.75rem;">ครูแต่ละคนต้องการความช่วยเหลือต่างกัน</h3></div>
+    <div class="card"><span class="en">Gap 2 — Limited Follow-up</span><h3 style="font-size: 1.75rem;">เวลาติดตามรายบุคคลมีจำกัด</h3></div>
+    <div class="card"><span class="en">Gap 3 — Learning Evidence</span><h3 style="font-size: 1.75rem;">ข้อมูลผลการเรียนรู้ยังไม่เพียงพอ</h3></div>
+  </div>
+  <p class="banner"><b>โจทย์สำคัญ:</b> จะออกแบบระบบนิเทศให้ตอบทั้ง 3 ช่องว่างได้อย่างไร?</p>
+  <aside class="notes">
+    <p>“เมื่อเรานำข้อจำกัดทั้งหมดมาสังเคราะห์ คณะผู้จัดทำมองเห็นช่องว่างสำคัญสามประเด็นครับ</p>
+    <p>ประเด็นแรกคือความแตกต่างระหว่างครู ครูแต่ละคนมีความสามารถในการวิเคราะห์การสอนและความต้องการความช่วยเหลือไม่เหมือนกัน</p>
+    <p>ประเด็นที่สองคือเวลาติดตาม เพราะการนิเทศตามแผนจำนวนมากอาจทำให้เวลาที่ใช้ช่วยเหลือครูแต่ละคนอย่างลึกซึ้งมีจำกัด</p>
+    <p>ประเด็นที่สามคือข้อมูลผลการเรียนรู้ ตัวเลขการดำเนินงานที่มีอยู่ยังไม่สามารถตอบคำถามว่าทักษะการอ่านของนักเรียนดีขึ้นหรือไม่</p>
+    <p>ทั้งสามประเด็นจึงกลายเป็นโจทย์ในการออกแบบระบบนิเทศ</p>
+    <p>เราต้องการระบบที่มีขั้นตอนชัดเจน เลือกวิธีช่วยเหลือครูให้เหมาะสม และติดตามผลไปถึงระดับผู้เรียนได้</p>
+    <p>จากโจทย์นี้เอง คณะผู้จัดทำจึงเสนอแบบจำลอง PIDRE-D ที่จะนำเสนอในช่วงต่อไปครับ”</p>
+    <p class="ref">อ้างอิง: เอกสารวิชาการกลุ่มที่ 1 หัวข้อ 4.5</p>
+  </aside>
+</section>
+
+<!-- ======================= ACT V ======================= -->
+<section class="slide" data-act="V" data-part="innovation" data-time="1.5" data-title="PIDRE-D: จากปัญหาสู่ข้อเสนอการพัฒนาระบบนิเทศ">
+  <div class="head"><p class="kicker">PIDRE-D</p><h2 class="t">PIDRE-D: จากปัญหาสู่ข้อเสนอการพัฒนาระบบนิเทศ</h2></div>
+  <p class="lead">การนิเทศตามระดับพัฒนาการของครูด้วยการโค้ช Lesson Study และวิดีโอ</p>
+  <div class="fill" style="display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 1.4rem; align-items: center;">
+    <div class="card"><h3 style="font-size: 2.4rem; color: var(--green);">PIDRE</h3><p>โครงสร้างกระบวนการนิเทศอย่างเป็นระบบ</p></div>
+    <div style="font-family: var(--display); font-size: 3.4rem; font-weight: 700; color: var(--green);" aria-hidden="true">+</div>
+    <div class="card"><h3 style="font-size: 2.4rem; color: var(--green);">Developmental Supervision</h3><p>เลือกวิธีนิเทศตามระดับพัฒนาการของครู</p></div>
+  </div>
+  <div class="row" style="flex-wrap: wrap; gap: 0.8rem;">
+    <span class="en" style="margin-right: 0.4rem;">3 แนวทางหลัก</span>
+    <span class="chip" style="font-size: 1.25rem; padding: 0.45rem 1.1rem;">Coaching</span>
+    <span class="chip" style="font-size: 1.25rem; padding: 0.45rem 1.1rem;">Lesson Study</span>
+    <span class="chip" style="font-size: 1.25rem; padding: 0.45rem 1.1rem;">Video Reflection</span>
+    <span class="chip warn" style="font-size: 1.15rem; padding: 0.45rem 1.1rem; margin-left: auto;">สถานะ: แบบจำลองที่คณะผู้จัดทำเสนอ</span>
+  </div>
+  <aside class="notes">
+    <p>“หลังจากวิเคราะห์ปัญหาและข้อจำกัด เราจะเข้าสู่ส่วนสุดท้ายของเนื้อหาหลัก ซึ่งเป็นข้อเสนอแนวทางพัฒนาของกลุ่มครับ</p>
+    <p>แบบจำลองนี้มีชื่อว่า PIDRE-D หรือการนิเทศตามระดับพัฒนาการของครูด้วยการโค้ช Lesson Study และวิดีโอ</p>
+    <p>แนวคิดหลักคือการผสมผสานองค์ความรู้สองส่วน</p>
+    <p>ส่วนแรกคือ PIDRE ซึ่งให้โครงสร้างการนิเทศอย่างเป็นระบบ ตั้งแต่การวางแผนจนถึงการประเมินผล</p>
+    <p>ส่วนที่สองคือ Developmental Supervision ของ Glickman และ Gordon ซึ่งช่วยให้เราเลือกวิธีนิเทศให้สอดคล้องกับความสามารถในการคิดและการแก้ปัญหาการสอนของครู</p>
+    <p>ในขั้นดำเนินการ คณะผู้จัดทำเสนอการใช้วิธีที่แตกต่างกัน ได้แก่ การโค้ชตัวต่อตัว Lesson Study และการวิเคราะห์วิดีโอการสอนของตนเอง</p>
+    <p>เป้าหมายไม่ใช่เพิ่มภาระเอกสาร แต่เป็นการจัดระบบช่วยเหลือครูให้เหมาะสม และติดตามผลการพัฒนาถึงระดับผู้เรียน</p>
+    <p>อย่างไรก็ตาม ต้องย้ำว่า PIDRE-D เป็นแบบจำลองที่คณะผู้จัดทำเสนอ ยังไม่ได้ผ่านการทดลองใช้จริงในฐานะระบบที่รวมองค์ประกอบเหล่านี้เข้าด้วยกันครับ”</p>
+    <p class="ref">อ้างอิง: Glickman &amp; Gordon (1987); แบบจำลอง PIDRE-D ของคณะผู้จัดทำ หัวข้อ 5.1–5.2</p>
+  </aside>
+</section>
+
+<section class="slide" data-act="V" data-part="innovation" data-time="1.5" data-title="ทำไมจึงเลือก Coaching, Lesson Study และ Video?">
+  <div class="head"><p class="kicker">Research Evidence Supporting PIDRE-D Components</p><h2 class="t">ทำไมจึงเลือก Coaching, Lesson Study และ Video?</h2></div>
+  <div class="g3 fill">
+    <div class="card" style="gap: 0.9rem;">
+      <span class="en">Coaching</span>
+      <div class="ev" role="img" aria-label="ขนาดอิทธิพล ต่อการสอน 0.49 SD ต่อผลสัมฤทธิ์ผู้เรียน 0.18 SD">
+        <span>ผลต่อการสอน</span><div class="track"><i style="width: 98%;"></i></div>
+        <span></span><div class="big-sd">0.49 SD</div>
+        <span>ผลต่อผลสัมฤทธิ์ผู้เรียน</span><div class="track"><i style="width: 36%;"></i></div>
+        <span></span><div class="big-sd">0.18 SD</div>
+      </div>
+      <p class="src" style="margin-top: auto;">Kraft et al. (2018)</p>
+    </div>
+    <div class="card"><span class="en">Lesson Study</span><p>มีหลักฐานการทดลองแบบสุ่มในบริบทการเรียนรู้เรื่องเศษส่วน</p><p class="src">Lewis &amp; Perry (2017)</p></div>
+    <div class="card"><span class="en">Video-Based Approach</span><p>มีงานศึกษาผลการพัฒนาการสอนและผลสัมฤทธิ์ผู้เรียน</p><p class="src">Allen et al. (2011)</p></div>
+  </div>
+  <p class="banner warn">หลักฐานสนับสนุนแต่ละวิธี ไม่ใช่ผลการทดลอง PIDRE-D</p>
+  <aside class="notes">
+    <p>“คำถามสำคัญสำหรับการเสนอนวัตกรรมระดับปริญญาโทคือ เรามีหลักฐานทางวิชาการรองรับวิธีการที่เลือกใช้หรือไม่ครับ</p>
+    <p>ในส่วนของ Coaching งานวิเคราะห์อภิมานของ Kraft และคณะ ในปี 2018 ซึ่งรวบรวมงานวิจัย 60 งาน รายงานขนาดอิทธิพลเฉลี่ยต่อการปฏิบัติการสอน 0.49 ส่วนเบี่ยงเบนมาตรฐาน และต่อผลสัมฤทธิ์ผู้เรียน 0.18 ส่วนเบี่ยงเบนมาตรฐาน</p>
+    <p>ค่าดังกล่าวเป็นขนาดอิทธิพลเชิงสถิติ ไม่ได้หมายความว่าผลสัมฤทธิ์เพิ่มขึ้นร้อยละ 18 หรือร้อยละ 49 และงานวิจัยยังรายงานว่าผลมีขนาดเล็กลงเมื่อขยายโครงการไปสู่ระดับใหญ่</p>
+    <p>ส่วน Lesson Study มีงานของ Lewis และ Perry ในปี 2017 ที่ศึกษาด้วยการทดลองแบบสุ่มในบริบทการเรียนรู้เรื่องเศษส่วน ขณะที่ Inprasitha อธิบายพัฒนาการของ Lesson Study ในประเทศไทย</p>
+    <p>สำหรับการใช้วิดีโอ งานของ Allen และคณะในปี 2011 ศึกษาแนวทางพัฒนาการสอนผ่านปฏิสัมพันธ์และการใช้วิดีโอ ซึ่งรายงานผลเชิงบวกต่อผลสัมฤทธิ์ของผู้เรียนในปีถัดมา</p>
+    <p>เอกสารยังอ้างงานไทยของสามารถ ทิมนาค ที่ศึกษาการนิเทศตามแนวคิด Glickman กับทักษะการอ่าน</p>
+    <p>สิ่งที่ต้องแยกให้ชัดคือ งานเหล่านี้สนับสนุนวิธีการแต่ละองค์ประกอบ แต่ยังไม่ได้พิสูจน์ว่าเมื่อนำทั้งหมดมารวมเป็น PIDRE-D จะเกิดผลเช่นเดียวกัน</p>
+    <p>ดังนั้น การทดลองใช้แบบจำลองจริงยังมีความจำเป็นครับ”</p>
+    <p class="ref">อ้างอิง: Kraft, Blazar, &amp; Hogan (2018); Lewis &amp; Perry (2017); Inprasitha (2022); Allen et al. (2011); สามารถ ทิมนาค (2554)</p>
+  </aside>
+</section>
+
+<section class="slide" data-act="V" data-part="innovation" data-time="1.5" data-title="P + I: เข้าใจครูก่อนเลือกวิธีนิเทศ">
+  <h2 class="t">P + I: เข้าใจครูก่อนเลือกวิธีนิเทศ</h2>
+  <div class="g2 fill">
+    <div class="card"><div class="row"><b style="font-family: var(--display); font-size: 3.2rem; line-height: 1; color: var(--green);">P</b><span class="en">Planning</span></div><ul><li>ครูประเมินตนเอง</li><li>สังเกตการสอนเบื้องต้น 1 ครั้ง</li><li>จัดกลุ่มความต้องการพัฒนา 3 ระดับ</li><li>จัดทำแผนนิเทศรายบุคคล</li></ul></div>
+    <div class="card"><div class="row"><b style="font-family: var(--display); font-size: 3.2rem; line-height: 1; color: var(--green);">I</b><span class="en">Informing</span></div><ul><li>ชี้แจงเป้าหมายและเกณฑ์สังเกต</li><li>ตกลงวิธีนิเทศร่วมกัน</li><li>กำหนดขอบเขตข้อมูลเพื่อการพัฒนา</li></ul></div>
+  </div>
+  <p class="banner"><b>หลักคิด:</b> เข้าใจครู และสร้างความไว้วางใจก่อนเริ่มนิเทศ</p>
+  <aside class="notes">
+    <p>“กระบวนการ PIDRE-D เริ่มจาก Planning หรือการวางแผนตามระดับพัฒนาการของครูครับ</p>
+    <p>ครูประเมินตนเอง และผู้นิเทศสังเกตการสอนเบื้องต้นหนึ่งครั้ง เพื่อใช้ข้อมูลร่วมกันพิจารณาความต้องการพัฒนา</p>
+    <p>จากนั้นจัดครูเป็นสามระดับ</p>
+    <p>ระดับที่หนึ่ง คือครูที่ยังต้องการคำแนะนำ</p>
+    <p>ระดับที่สอง คือครูที่พร้อมร่วมคิดวิเคราะห์และแก้ปัญหา</p>
+    <p>และระดับที่สาม คือครูที่สามารถพัฒนาตนเองได้</p>
+    <p>การจัดระดับนี้มีวัตถุประสงค์เพื่อกำหนดวิธีช่วยเหลือ ไม่ใช่การตัดสินคุณค่าหรือจัดอันดับครู</p>
+    <p>จากนั้นเข้าสู่ Informing ซึ่งเป็นขั้นทำข้อตกลงร่วมกันก่อนนิเทศ ทั้งเป้าหมาย เกณฑ์การสังเกต และวิธีการนิเทศ</p>
+    <p>อีกเรื่องที่สำคัญคือการกำหนดให้ข้อมูลจากกระบวนการนี้ใช้เพื่อการพัฒนาครู ไม่ใช้ประกอบการประเมินผลการปฏิบัติงาน</p>
+    <p>ขั้นตอนเหล่านี้ช่วยให้การนิเทศเริ่มจากความต้องการจริงของครู และสร้างความไว้วางใจระหว่างสองฝ่ายครับ”</p>
+    <p class="ref">อ้างอิง: แบบจำลอง PIDRE-D ของคณะผู้จัดทำ หัวข้อ 5.3 ขั้น P และ I</p>
+  </aside>
+</section>
+
+<section class="slide" data-act="V" data-part="innovation" data-time="3" data-title="D: ครูต่างระดับ ได้รับการสนับสนุนต่างวิธี">
+  <div class="head"><p class="kicker">D — Doing: Differentiated Supervision</p><h2 class="t">D: ครูต่างระดับ ได้รับการสนับสนุนต่างวิธี</h2></div>
+  <div class="g3 fill">
+    <div class="card"><span class="en">ระดับ 1</span><h3 style="font-size: 2rem;">Coaching</h3><p>โค้ชตัวต่อตัว แบบชี้แนะ พร้อมการสาธิต</p></div>
+    <div class="card"><span class="en">ระดับ 2</span><h3 style="font-size: 2rem;">Lesson Study</h3><p>ร่วมออกแบบบทเรียน เปิดชั้นเรียน และสังเกตร่วมกัน</p></div>
+    <div class="card"><span class="en">ระดับ 3</span><h3 style="font-size: 2rem;">Video Reflection</h3><p>วิเคราะห์วิดีโอการสอนของตนเองแบบไม่ชี้นำ และนำกลุ่ม Lesson Study</p></div>
+  </div>
+  <p class="banner"><b>เป้าหมาย:</b> พัฒนาความสามารถในการกำกับการเรียนรู้ทางวิชาชีพของครู</p>
+  <aside class="notes">
+    <p>“ขั้น Doing เป็นหัวใจสำคัญของแบบจำลอง PIDRE-D ครับ เพราะเป็นขั้นที่เลือกวิธีนิเทศแตกต่างกันตามระดับพัฒนาการของครู</p>
+    <p>เริ่มจากครูระดับที่หนึ่ง ซึ่งยังต้องการคำแนะนำที่ชัดเจน คณะผู้จัดทำเสนอการโค้ชตัวต่อตัวแบบชี้แนะ พร้อมการสาธิตวิธีจัดกิจกรรม</p>
+    <p>หากเชื่อมกับกรณีศึกษาการอ่านจับใจความ การช่วยเหลืออาจมุ่งให้ครูเข้าใจวิธีออกแบบกิจกรรมที่ส่งเสริมการคิดวิเคราะห์และสรุปความ โดยเนื้อหาการช่วยเหลือต้องพิจารณาจากข้อมูลการสอนจริงของครูแต่ละคน</p>
+    <p>ครูระดับที่สองเป็นกลุ่มที่พร้อมร่วมคิดและแก้ปัญหา จึงเสนอให้เข้าร่วม Lesson Study หรือการศึกษาชั้นเรียน โดยครูร่วมกันออกแบบบทเรียน เปิดชั้นเรียนให้เพื่อนครูสังเกต แล้วนำข้อมูลมาสะท้อนผลและปรับปรุงบทเรียน</p>
+    <p>จุดสำคัญของ Lesson Study คือการร่วมกันเรียนรู้จากบทเรียนและหลักฐานที่เกิดขึ้นในห้องเรียน ไม่ใช่เพียงการเข้าไปชมการสอนแล้วให้คะแนนครู</p>
+    <p>สำหรับครูระดับที่สาม ซึ่งสามารถวิเคราะห์การสอนของตนเองได้ คณะผู้จัดทำเสนอให้ใช้วิดีโอบันทึกการสอนเพื่อนำมาสะท้อนคิดแบบไม่ชี้นำ และให้ครูกลุ่มนี้มีบทบาทนำในการดำเนิน Lesson Study</p>
+    <p>อย่างไรก็ตาม การใช้วิดีโอต้องมีข้อตกลงและมาตรการด้านความเป็นส่วนตัวที่เหมาะสม</p>
+    <p>สิ่งสำคัญที่สุดคือระดับทั้งสามไม่ได้เป็นสถานะถาวร ครูสามารถพัฒนาและเปลี่ยนระดับได้เมื่อมีหลักฐานความก้าวหน้าที่เหมาะสม</p>
+    <p>วิธีการนี้จึงเชื่อมโดยตรงกับแนวคิดการนิเทศแบบพัฒนาการของ Glickman และ Gordon ที่กล่าวไปแล้วในช่วง Theory ครับ”</p>
+    <p class="ref">อ้างอิง: Glickman &amp; Gordon (1987); แบบจำลอง PIDRE-D ของคณะผู้จัดทำ หัวข้อ 5.3 ขั้น D</p>
+  </aside>
+</section>
+
+<section class="slide" data-act="V" data-part="innovation" data-time="1.5" data-title="R + E: เสริมกำลังใจและประเมินความก้าวหน้า">
+  <h2 class="t">R + E: เสริมกำลังใจและประเมินความก้าวหน้า</h2>
+  <div class="g2 fill">
+    <div class="card"><div class="row"><b style="font-family: var(--display); font-size: 3.2rem; line-height: 1; color: var(--green);">R</b><span class="en">Reinforcing</span></div><ul><li>ให้ข้อมูลย้อนกลับเชิงบวกอย่างเฉพาะเจาะจง</li><li>ยอมรับความสำเร็จและความก้าวหน้าของครู</li><li>ให้ครูระดับ 3 แลกเปลี่ยนใน PLC และช่วยนิเทศเพื่อนครู</li></ul></div>
+    <div class="card"><div class="row"><b style="font-family: var(--display); font-size: 3.2rem; line-height: 1; color: var(--green);">E</b><span class="en">Evaluating</span></div><ul><li>ประเมินความก้าวหน้าตามตัวชี้วัด</li><li>ทบทวนระดับพัฒนาการของครู</li><li>ใช้ข้อมูลผลการอ่านของผู้เรียน</li><li>ส่งผลกลับสู่แผนพัฒนาครูและรายวิชา</li></ul></div>
+  </div>
+  <aside class="notes">
+    <p>“หลังจากดำเนินการนิเทศด้วยวิธีที่เหมาะสมแล้ว ยังมีอีกสองขั้นตอนที่สำคัญครับ</p>
+    <p>ขั้นแรกคือ Reinforcing หรือการเสริมกำลังใจ</p>
+    <p>ในแบบจำลองนี้ไม่ได้หมายถึงการชมเชยโดยไม่มีหลักฐาน แต่เป็นการให้ข้อมูลย้อนกลับเชิงบวกที่เจาะจงกับสิ่งที่ครูทำได้จริง และเปิดโอกาสให้ครูที่มีความพร้อมนำผลงานมาแลกเปลี่ยนใน PLC รวมถึงช่วยนิเทศเพื่อนครู</p>
+    <p>แนวคิดนี้สอดคล้องกับงานของ Sergiovanni ที่กล่าวถึงความสำเร็จ การได้รับการยอมรับ และความรับผิดชอบซึ่งสัมพันธ์กับความพึงพอใจในการทำงานของครู</p>
+    <p>ขั้นต่อมาคือ Evaluating หรือการประเมินผล</p>
+    <p>เมื่อสิ้นภาคเรียน ทีมนิเทศจะประเมินความก้าวหน้าตามตัวชี้วัดที่เสนอ พิจารณาระดับพัฒนาการของครู และใช้ข้อมูลผลการเรียนรู้ของผู้เรียน เช่น ผลการอ่าน เพื่อทบทวนว่าควรปรับปรุงการสนับสนุนครูอย่างไร</p>
+    <p>ผลที่ได้จะนำกลับไปสู่การวางแผนพัฒนาครูและการปรับปรุงรายวิชา</p>
+    <p>ทำให้กระบวนการนิเทศไม่ได้สิ้นสุดเมื่อเข้าเยี่ยมชั้นเรียนเสร็จ แต่ยังมีการติดตามและทบทวนอย่างต่อเนื่องครับ”</p>
+    <p class="ref">อ้างอิง: Sergiovanni (1967); แบบจำลอง PIDRE-D ของคณะผู้จัดทำ หัวข้อ 5.3 ขั้น R และ E</p>
+  </aside>
+</section>
+
+<section class="slide" data-act="V" data-part="innovation" data-time="1.5" data-title="เครื่องมือ 4 ชิ้นที่ทำให้ PIDRE-D นำไปใช้ได้">
+  <div class="head"><p class="kicker">PIDRE-D Implementation Tools</p><h2 class="t">เครื่องมือ 4 ชิ้นที่ทำให้ PIDRE-D นำไปใช้ได้</h2></div>
+  <div class="g2 fill" style="align-content: center;">
+    <div class="card"><div class="row"><span class="n">1</span><span class="en">Teacher Self-Assessment</span></div><h3>แบบประเมินตนเองของครู</h3></div>
+    <div class="card"><div class="row"><span class="n">2</span><span class="en">Classroom Observation</span></div><h3>แบบสังเกตการสอน</h3></div>
+    <div class="card"><div class="row"><span class="n">3</span><span class="en">Individual Supervision Record</span></div><h3>แบบบันทึกนิเทศรายบุคคลในระบบออนไลน์</h3></div>
+    <div class="card"><div class="row"><span class="n">4</span><span class="en">Semester Evaluation Report</span></div><h3>แบบสรุปผลรายภาคเรียน พร้อมผลการเรียนรู้ของผู้เรียน</h3></div>
+  </div>
+  <p class="banner soft">พัฒนาจากระบบเดิม และตรวจ IOC ก่อนใช้เครื่องมือใหม่จริง</p>
+  <aside class="notes">
+    <p>“ข้อเสนอ PIDRE-D ไม่ได้กำหนดให้โรงเรียนต้องซื้อระบบเทคโนโลยีใหม่ทั้งหมดครับ</p>
+    <p>คณะผู้จัดทำเสนอให้ใช้เครื่องมือที่โรงเรียนมีอยู่เป็นพื้นฐาน แล้วปรับเพิ่มข้อมูลที่จำเป็น</p>
+    <p>เครื่องมือชิ้นแรกคือแบบประเมินตนเองของครู ซึ่งต้องสร้างขึ้นเพื่อช่วยพิจารณาระดับความต้องการพัฒนา</p>
+    <p>ชิ้นที่สองคือแบบสังเกตการสอน โดยนำแบบเยี่ยมชั้นเรียนเดิมมาปรับเพิ่มเติมพฤติกรรมที่เกี่ยวข้องกับการสอนอ่านจับใจความ</p>
+    <p>ชิ้นที่สามคือแบบบันทึกการนิเทศในระบบออนไลน์เดิม โดยเพิ่มข้อมูลเกี่ยวกับระดับพัฒนาการของครูและวิธีนิเทศที่ใช้</p>
+    <p>และชิ้นที่สี่คือแบบสรุปผลรายภาคเรียน โดยเพิ่มข้อมูลผลการอ่านของผู้เรียน เพื่อให้มีหลักฐานติดตามผลการเรียนรู้</p>
+    <p>เครื่องมือใหม่ควรได้รับการตรวจสอบความสอดคล้องจากผู้เชี่ยวชาญด้วยวิธี IOC ก่อนนำไปใช้จริง</p>
+    <p>แนวคิดหลักคือใช้ทรัพยากรที่มีอยู่ให้เกิดประโยชน์ โดยเพิ่มคุณภาพของข้อมูลที่นำมาสนับสนุนการตัดสินใจครับ”</p>
+    <p class="ref">อ้างอิง: แบบจำลอง PIDRE-D ของคณะผู้จัดทำ หัวข้อ 5.4</p>
+  </aside>
+</section>
+
+<section class="slide" data-act="V" data-part="innovation" data-time="1.5" data-title="เราจะรู้ได้อย่างไรว่า PIDRE-D ประสบความสำเร็จ?">
+  <div class="head"><p class="kicker">Proposed Success Indicators</p><h2 class="t">เราจะรู้ได้อย่างไรว่า PIDRE-D ประสบความสำเร็จ?</h2></div>
+  <div class="tbl-wrap">
+    <table class="tb">
+      <thead><tr><th>ตัวชี้วัด</th><th style="width: 42%;">เป้าหมายปีแรก</th></tr></thead>
+      <tbody>
+        <tr><td>ครูได้รับการนิเทศครบตามแผน</td><td class="num">≥95%</td></tr>
+        <tr><td>ครูระดับ 1–2 เลื่อนขึ้นหนึ่งระดับ</td><td class="num">≥20%</td></tr>
+        <tr><td>ข้อเสนอแนะที่ครูนำไปใช้จริง</td><td class="num">≥70%</td></tr>
+        <tr><td>ครูเห็นว่าการนิเทศเป็นการช่วยเหลือ</td><td class="num">ค่าเฉลี่ย ≥3.51/5</td></tr>
+        <tr><td>ผลการเรียนรู้ของผู้เรียน</td><td class="num" style="white-space: normal;">หลังเรียนสูงกว่าก่อน; ≥70% ผ่านเกณฑ์ 60%</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="banner warn" style="margin-top: auto;">ทุกตัวเลขเป็นค่าเป้าหมายที่เสนอ ไม่ใช่ผลการทดลองจริง</p>
+  <aside class="notes">
+    <p>“เมื่อเสนอแบบจำลองขึ้นมาแล้ว เราจำเป็นต้องกำหนดว่าจะวัดความสำเร็จอย่างไรครับ</p>
+    <p>คณะผู้จัดทำเสนอให้ใช้ตัวชี้วัดห้าด้าน</p>
+    <p>ด้านแรกคือความครอบคลุมของการนิเทศ โดยกำหนดเป้าหมายไม่น้อยกว่าร้อยละ 95 ของครูที่ได้รับการนิเทศครบตามแผน</p>
+    <p>ด้านที่สองคือความก้าวหน้าของครูระดับหนึ่งและสอง โดยเสนอให้ไม่น้อยกว่าร้อยละ 20 เลื่อนขึ้นหนึ่งระดับภายในปีการศึกษา</p>
+    <p>ด้านที่สามคือการนำข้อเสนอแนะจากการนิเทศไปใช้จริง โดยตั้งเป้าไม่น้อยกว่าร้อยละ 70</p>
+    <p>ด้านที่สี่คือความคิดเห็นของครูต่อการนิเทศ โดยต้องการค่าเฉลี่ยไม่น้อยกว่า 3.51 จากมาตราส่วนห้าระดับ</p>
+    <p>และด้านสุดท้ายคือผลการเรียนรู้ของผู้เรียน โดยคาดหวังให้ผลหลังเรียนสูงกว่าก่อนเรียน และผู้เรียนไม่น้อยกว่าร้อยละ 70 ผ่านเกณฑ์ร้อยละ 60</p>
+    <p>สำหรับผู้เรียนที่มีความต้องการจำเป็นพิเศษ ให้พิจารณาตามแผนการจัดการศึกษาเฉพาะบุคคลหรือ IEP</p>
+    <p>ต้องย้ำว่าเป้าหมายทั้งหมดนี้เป็นค่าที่คณะผู้จัดทำเสนอสำหรับปีแรก ไม่ใช่ผลการทดลองที่เกิดขึ้นแล้ว และควรปรับให้เหมาะสมกับข้อมูลพื้นฐานของสถานศึกษาที่จะนำไปใช้จริงครับ”</p>
+    <p class="ref">อ้างอิง: แบบจำลอง PIDRE-D ของคณะผู้จัดทำ หัวข้อ 5.5 ตารางที่ 4</p>
+  </aside>
+</section>
+
+<section class="slide" data-act="V" data-part="innovation" data-time="1.5" data-title="ความเสี่ยงของ PIDRE-D และแนวทางป้องกัน">
+  <div class="head"><p class="kicker">Risks &amp; Safeguards</p><h2 class="t">ความเสี่ยงของ PIDRE-D และแนวทางป้องกัน</h2></div>
+  <div class="tbl-wrap">
+    <table class="tb">
+      <thead><tr><th style="width: 46%;">ความเสี่ยง</th><th>แนวทางลดความเสี่ยง</th></tr></thead>
+      <tbody>
+        <tr><td>ครูรู้สึกถูกตีตรา</td><td>ไม่เปิดเผยระดับรายบุคคล</td></tr>
+        <tr><td>จัดระดับครูคลาดเคลื่อน</td><td>ผู้นิเทศ 2 คนร่วมพิจารณา</td></tr>
+        <tr><td>การบันทึกวิดีโอกระทบความเป็นส่วนตัว</td><td>ขอความยินยอม ไม่ถ่ายหน้าผู้เรียน</td></tr>
+        <tr><td>Lesson Study มีข้อจำกัดด้านเวลา</td><td>จัดตารางว่างร่วมกัน</td></tr>
+        <tr><td>วิธีนิเทศไม่ตรงกับความคาดหวัง</td><td>ทำข้อตกลงร่วมกันก่อนนิเทศ</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <aside class="notes">
+    <p>“นวัตกรรมที่ดีต้องพิจารณาทั้งข้อดีและความเสี่ยงครับ</p>
+    <p>สำหรับ PIDRE-D ความเสี่ยงข้อแรกคือการจัดระดับครูอาจทำให้บางคนรู้สึกถูกตีตรา จึงเสนอให้ใช้ข้อมูลประเมินตนเองร่วมกับการสังเกต ไม่ประกาศระดับเป็นรายชื่อ และทบทวนระดับทุกภาคเรียน</p>
+    <p>ข้อที่สองคือผู้นิเทศอาจวินิจฉัยระดับคลาดเคลื่อน จึงให้ผู้นิเทศสองคนร่วมพิจารณา และเปิดโอกาสให้ครูขอทบทวนได้</p>
+    <p>ข้อที่สามคือการใช้วิดีโอ ซึ่งต้องมีความระมัดระวังด้านความเป็นส่วนตัว โดยเอกสารเสนอให้ขอความยินยอมจากครูและผู้ปกครอง และหลีกเลี่ยงการถ่ายใบหน้าผู้เรียน</p>
+    <p>ส่วน Lesson Study ต้องอาศัยเวลาร่วมกันของครู จึงควรจัดตารางให้สามารถร่วมออกแบบ สังเกต และสะท้อนบทเรียนได้</p>
+    <p>อีกประเด็นคือวิธีนิเทศที่ผู้นิเทศเลือกอาจไม่ตรงกับความคาดหวังของครู จึงจำเป็นต้องมีการพูดคุยและทำข้อตกลงร่วมกันในขั้น Informing</p>
+    <p>ทั้งหมดนี้สะท้อนว่า การพัฒนาระบบนิเทศต้องดูแลทั้งคุณภาพของกระบวนการและความสัมพันธ์ของผู้เกี่ยวข้องครับ”</p>
+    <p class="ref">อ้างอิง: Ozyildirim &amp; Bilgin Aksu (2016); Inprasitha (2022); แบบจำลอง PIDRE-D ของคณะผู้จัดทำ หัวข้อ 5.6</p>
+  </aside>
+</section>
+
+<section class="slide" data-act="V" data-part="innovation" data-time="1.5" data-title="นำร่อง PIDRE-D ภายใน 1 ภาคเรียน">
+  <div class="head"><p class="kicker">One-Semester Pilot Plan</p><h2 class="t">นำร่อง PIDRE-D ภายใน 1 ภาคเรียน</h2></div>
+  <div class="fill" style="display: flex; flex-direction: column; justify-content: center; gap: 1.2rem;">
+    <div class="weeks" role="img" aria-label="แผน 18 สัปดาห์: สัปดาห์ 1–2 ขั้น P และ I, สัปดาห์ 3–14 ขั้น D, สัปดาห์ 16–18 ขั้น E" id="weeks">
+      <span></span>
+    </div>
+    <div class="g3">
+      <div class="card"><span class="en">สัปดาห์ 1–2 · P + I</span><p>ทดสอบการอ่านก่อนเรียน ประเมินครู จัดระดับ และทำข้อตกลง</p></div>
+      <div class="card"><span class="en">สัปดาห์ 3–14 · D</span><ul><li>Coaching ทุก 2 สัปดาห์สำหรับครูระดับ 1</li><li>Lesson Study 1 วงรอบ</li><li>ครูระดับ 3 บันทึกวิดีโอ 2 ครั้ง</li><li>PLC เดือนละครั้ง</li></ul></div>
+      <div class="card"><span class="en">สัปดาห์ 16–18 · E</span><p>ประเมินผล ทบทวนระดับครู และสรุปข้อมูลผู้เรียน</p></div>
+    </div>
+  </div>
+  <p class="banner"><b>เกณฑ์เสนอเพื่อขยายผล:</b> ผ่านอย่างน้อย 3 จาก 5 ตัวชี้วัด</p>
+  <aside class="notes">
+    <p>“เพื่อให้ PIDRE-D ไม่หยุดอยู่ที่แบบจำลอง คณะผู้จัดทำจึงเสนอแผนนำร่องหนึ่งภาคเรียนครับ</p>
+    <p>กลุ่มเป้าหมายคือครูภาษาไทยระดับชั้น ป.6 ของโรงเรียนกรณีศึกษา ซึ่งเป็นระดับชั้นที่มีแผนพัฒนาทักษะการอ่านอยู่แล้ว</p>
+    <p>ช่วงสัปดาห์ที่หนึ่งถึงสอง ดำเนินขั้น Planning และ Informing โดยมีการทดสอบการอ่านก่อนเรียน ให้ครูประเมินตนเอง จัดระดับ และทำข้อตกลงร่วมกัน</p>
+    <p>ช่วงสัปดาห์ที่สามถึงสิบสี่เป็นการดำเนินงานนิเทศตามวิธีที่แตกต่างกัน</p>
+    <p>ครูระดับหนึ่งได้รับการโค้ชทุกสองสัปดาห์</p>
+    <p>มีการดำเนิน Lesson Study หนึ่งวงรอบ</p>
+    <p>ครูระดับสามบันทึกวิดีโอการสอนของตนเองสองครั้ง และมีการแลกเปลี่ยนใน PLC เดือนละครั้ง</p>
+    <p>ช่วงสัปดาห์ที่สิบหกถึงสิบแปดเป็นการประเมินผลตามแผน โดยใช้ข้อมูลทั้งด้านการพัฒนาครูและผลการเรียนรู้ของผู้เรียน</p>
+    <p>เอกสารเสนอให้รองผู้อำนวยการประจำสายชั้นและหัวหน้ากลุ่มสาระภาษาไทยทำหน้าที่โค้ช โดยควรได้รับการเตรียมความรู้ด้านการนิเทศแบบคลินิกก่อน</p>
+    <p>การดำเนินงานใช้โทรศัพท์และระบบออนไลน์เดิมของโรงเรียนเป็นหลัก</p>
+    <p>สำหรับการขยายผล เอกสารเสนอว่า หากผ่านตัวชี้วัดอย่างน้อยสามจากห้าข้อ จึงพิจารณาขยายไปยังกลุ่มสาระอื่น</p>
+    <p>อย่างไรก็ตาม เกณฑ์นี้ยังเป็นข้อเสนอที่ต้องประเมินความเหมาะสมเพิ่มเติม โดยเฉพาะกรณีที่ผ่านตัวชี้วัดด้านกระบวนการแต่ยังไม่ผ่านด้านผลผู้เรียน</p>
+    <p>ส่วนสัปดาห์ที่สิบห้า เอกสารไม่ได้กำหนดกิจกรรมเฉพาะไว้ จึงไม่ควรเติมกิจกรรมลงไปโดยไม่มีข้อมูลเพิ่มเติม</p>
+    <p>ทั้งหมดนี้เป็นแผนนำร่องที่เสนอ ยังไม่ใช่ผลการดำเนินงานจริงครับ”</p>
+    <p class="ref">อ้างอิง: แบบจำลอง PIDRE-D ของคณะผู้จัดทำ หัวข้อ 5.7</p>
+  </aside>
+</section>
+
+<!-- ======================= ACT VI ======================= -->
+<section class="slide" data-act="VI" data-time="2" data-title="ถ้าเราเป็นผู้บริหาร จะนำความรู้นี้ไปใช้อย่างไร?">
+  <div class="head"><p class="kicker">3 มิติของการพัฒนาสถานศึกษา</p><h2 class="t">ถ้าเราเป็นผู้บริหาร จะนำความรู้นี้ไปใช้อย่างไร?</h2></div>
+  <div class="g3 fill">
+    <div class="card"><span class="en">Teachers</span><p>นิเทศตามระดับพัฒนาการ สร้างความไว้วางใจ และส่งเสริมการเรียนรู้ร่วมกัน</p></div>
+    <div class="card"><span class="en">Learners</span><p>ติดตามผลการเรียนรู้ ชิ้นงาน และข้อมูลพัฒนาการของผู้เรียน</p></div>
+    <div class="card"><span class="en">Curriculum</span><p>ใช้ข้อมูลการนิเทศปรับปรุงหน่วยการเรียนรู้ เวลา และเกณฑ์การประเมิน</p></div>
+  </div>
+  <p class="banner"><b>เป้าหมาย:</b> ระบบนิเทศที่เชื่อมครู ผู้เรียน และหลักสูตร</p>
+  <aside class="notes">
+    <p>“หลังจากศึกษาทฤษฎี กรณีศึกษา ปัญหา และแบบจำลองที่เสนอแล้ว เราจะนำองค์ความรู้ทั้งหมดมาพิจารณาในบทบาทของผู้บริหารสถานศึกษาครับ</p>
+    <p>หากเราเป็นผู้บริหาร สิ่งแรกที่ควรให้ความสำคัญคือการพัฒนาครู โดยเลือกวิธีนิเทศให้เหมาะกับความต้องการและความสามารถในการพัฒนาตนเองของครูแต่ละคน รวมถึงสร้างบรรยากาศที่ครูกล้าเปิดเผยปัญหาการสอน</p>
+    <p>สิ่งที่สองคือการพัฒนาผู้เรียน เราไม่ควรดูเฉพาะพฤติกรรมของครูในระหว่างการสังเกตการสอน แต่ต้องนำข้อมูลจากการเรียนรู้ เช่น ผลทดสอบการอ่านและชิ้นงาน มาใช้ติดตามผลด้วย</p>
+    <p>สำหรับนักเรียนที่มีความต้องการจำเป็นพิเศษ ต้องคำนึงถึงแผนการจัดการศึกษาเฉพาะบุคคล</p>
+    <p>สิ่งที่สามคือการพัฒนาหลักสูตร ผู้บริหารควรสนับสนุนให้ครูมีเวลาทำ Lesson Study และนำข้อค้นพบจากการนิเทศเข้าสู่การประชุมงานวิชาการ เพื่อใช้พิจารณาปรับหน่วยการเรียนรู้ เวลา และเกณฑ์การวัดผล</p>
+    <p>ทั้งสามด้านจึงต้องเชื่อมกัน ไม่ใช่แยกการนิเทศออกเป็นเพียงกิจกรรมของฝ่ายวิชาการ</p>
+    <p>เพราะเป้าหมายที่แท้จริงคือการพัฒนาคุณภาพการศึกษาของสถานศึกษาอย่างเป็นระบบครับ”</p>
+    <p class="ref">อ้างอิง: ข้อเสนอของคณะผู้จัดทำ หัวข้อ 6</p>
+  </aside>
+</section>
+
+<section class="slide" data-act="VI" data-time="1" data-title="จากการนิเทศให้ครบ สู่การนิเทศให้เกิดคุณค่า">
+  <h2 class="t">จากการนิเทศให้ครบ…สู่การนิเทศให้เกิดคุณค่า</h2>
+  <div class="g2 fill" style="grid-template-columns: 1fr 1.15fr; align-items: center; gap: 3rem;">
+    <div class="vchain">
+      <div class="box">ครูได้รับการพัฒนา</div>
+      <div class="down">↓</div>
+      <div class="box">การจัดการเรียนรู้ได้รับการปรับปรุง</div>
+      <div class="down">↓</div>
+      <div class="box">มีหลักฐานติดตามการเรียนรู้ของผู้เรียน</div>
+      <div class="down">↓</div>
+      <div class="box solid">นำข้อมูลกลับไปพัฒนาหลักสูตร</div>
+    </div>
+    <blockquote style="margin: 0; font-family: var(--display); font-weight: 600; font-size: 2.6rem; line-height: 1.45; color: var(--deep); text-wrap: balance;">“ความสำเร็จของการนิเทศไม่ควรจบที่จำนวนครั้ง แต่ต้องติดตามการเปลี่ยนแปลงที่เกิดขึ้นจริง”</blockquote>
+  </div>
+  <aside class="notes">
+    <p>“ก่อนจบ ผมอยากกลับมาที่คำถามในช่วงเปิดเรื่องครับ</p>
+    <p>หากโรงเรียนหนึ่งดำเนินการนิเทศได้ร้อยละ 98.1 เราควรเรียกว่าสำเร็จแล้วหรือยัง?</p>
+    <p>คำตอบคือ ตัวเลขนี้สะท้อนความสำเร็จของการดำเนินงานในด้านหนึ่ง และเป็นข้อมูลที่มีคุณค่า</p>
+    <p>แต่หากเราต้องการประเมินคุณภาพการนิเทศอย่างรอบด้าน เราต้องติดตามต่อว่าครูได้รับการพัฒนาอย่างไร การจัดการเรียนรู้เปลี่ยนแปลงอย่างไร และผู้เรียนมีผลการเรียนรู้ตามเป้าหมายหรือไม่</p>
+    <p>รวมถึงนำข้อค้นพบเหล่านั้นกลับไปพัฒนาหลักสูตรและระบบงานของสถานศึกษา</p>
+    <p>นี่คือแนวคิดสำคัญที่กลุ่มเราต้องการนำเสนอว่า</p>
+    <p>การนิเทศที่ดีไม่ได้สิ้นสุดเมื่อการสังเกตชั้นเรียนเสร็จสิ้น แต่ต้องเป็นกระบวนการพัฒนาที่ต่อเนื่อง และมีผลการเรียนรู้ของผู้เรียนเป็นจุดหมายปลายทาง</p>
+    <p>ขอบพระคุณอาจารย์ผู้สอนทั้งสองท่าน และขอบคุณเพื่อนนักศึกษาทุกท่านครับ”</p>
+    <p class="ref">อ้างอิง: สังเคราะห์จาก Harris (1985); Glickman &amp; Gordon (1987); Systems Approach และข้อเสนอของคณะผู้จัดทำ</p>
+  </aside>
+</section>
+
+<!-- ======================= APPENDIX ======================= -->
+<section class="slide" data-act="A" data-appendix="1" data-time="30" data-title="คำถามชวนคิดเพื่อการอภิปราย">
+  <div class="head"><p class="kicker">ถาม-ตอบและอภิปราย · 30 นาที</p><h2 class="t">คำถามชวนคิดเพื่อการอภิปราย</h2></div>
+  <ol class="qs fill" id="qs" style="justify-content: center;">
+    <li data-q="1"><span class="n">1</span><p>ถ้าผู้บริหารต้องทั้งนิเทศและประเมินผลงานครู จะทำอย่างไรให้ครูกล้าเปิดเผยปัญหาการสอน</p><button class="jump" type="button" data-go="23">ดูสไลด์ 23</button></li>
+    <li data-q="2"><span class="n">2</span><p>ความสัมพันธ์ผู้นิเทศ–ผู้รับการนิเทศในสถานศึกษาของท่านตรงกับแนวโน้มใดในตารางที่ 1</p><button class="jump" type="button" data-go="6">ดูสไลด์ 06</button></li>
+    <li data-q="3"><span class="n">3</span><p>การจัดระดับครูตามแนวคิดแบบพัฒนาการมีความเสี่ยงอะไร และจะลดความเสี่ยงอย่างไร</p><button class="jump" type="button" data-go="32">ดูสไลด์ 32</button></li>
+    <li data-q="4"><span class="n">4</span><p>เมื่อครูขาดแคลนและภาระงานมาก ควรนิเทศน้อยคนแต่ลึก หรือนิเทศทุกคนแต่ไม่ลึก</p><button class="jump" type="button" data-go="22">ดูสไลด์ 22</button></li>
+    <li data-q="5"><span class="n">5</span><p>ข้อมูลจากการนิเทศควรมีผลต่อการปรับหลักสูตรสถานศึกษามากเพียงใด และใครควรตัดสินใจ</p><button class="jump" type="button" data-go="14">ดูสไลด์ 14</button></li>
+  </ol>
+  <aside class="notes">
+    <p>ช่วงถาม-ตอบและอภิปราย 30 นาที</p>
+    <p>คลิกที่คำถามเพื่อเน้นทีละข้อ คลิกซ้ำเพื่อยกเลิก หรือกดปุ่มตัวเลข 1–5 บนแป้นพิมพ์</p>
+    <p>ปุ่ม “ดูสไลด์” จะพาไปยังสไลด์ที่เกี่ยวข้อง แล้วกดปุ่ม “กลับสไลด์ 36” ที่แถบด้านล่างเพื่อกลับมาที่คำถาม</p>
+    <p class="ref">ที่มา: เอกสารวิชาการกลุ่มที่ 1 หัวข้อ 7</p>
+  </aside>
+</section>
+
+<section class="slide" data-act="A" data-appendix="1" data-time="0" data-title="บรรณานุกรม">
+  <h2 class="t">บรรณานุกรม</h2>
+  <div class="bib fill">
+    <div>
+    <p>ชญานิศ สุใจยา. (2567). การพัฒนารูปแบบการนิเทศการทำวิจัยในชั้นเรียนของครูเพื่อพัฒนาคุณภาพเด็กปฐมวัย สู่ความเป็นเลิศ โรงเรียนเทศบาล 4 ฉลองรัตน. <i>วารสารการบริหารและพัฒนา วิทยาลัยพิชญบัณฑิต, 7</i>(2), 50–72.</p>
+    <p>ธมลวรรณ พูนวัฒนานุกูล และบรรจบ บุญจันทร์. (2568). แนวทางพัฒนาการดำเนินการนิเทศภายในของสถานศึกษา สังกัดสำนักงานเขตพื้นที่การศึกษาประถมศึกษานครราชสีมา เขต 3. <i>วารสารเสียงธรรมจากมหายาน, 11</i>(2), 290–305.</p>
+    <p>ยุภารัตน์ หาสุข, อรรถพร วรรณทอง, และไพรวัลย์ โคตรตะ. (2568). ความสัมพันธ์ระหว่างทักษะการนิเทศของผู้บริหารสถานศึกษาในยุคดิจิทัลกับพฤติกรรมการสอนของครู สังกัดสำนักงานเขตพื้นที่การศึกษามัธยมศึกษาอุบลราชธานี อำนาจเจริญ. <i>วารสารการบริหารและนิเทศการศึกษา, 16</i>(2), 218–238.</p>
+    <p>สุชัญญา ลือชา, สุนิสา วงศ์อารีย์, และจิรันธนิน ทองธิราช. (2569). แนวทางการนิเทศการศึกษาแบบร่วมพัฒนาวิชาชีพของผู้บริหารศูนย์การศึกษาพิเศษ กลุ่มเครือข่ายฯ ศูนย์การศึกษาพิเศษ เขตการศึกษา 9. <i>วารสารครุศาสตร์ปัญญา, 5</i>(4), 200–218.</p>
+    <p>สำนักงานคณะกรรมการข้าราชการครูและบุคลากรทางการศึกษา. (ม.ป.ป.). <i>[เอกสารประกอบการดำเนินการตามหลักเกณฑ์และวิธีการประเมินตำแหน่งและวิทยฐานะของข้าราชการครูและบุคลากรทางการศึกษา]</i>. https://otepc.go.th/th/content_page/download/345/4351/17.html</p>
+    <p>สามารถ ทิมนาค. (2554). การพัฒนารูปแบบการนิเทศการสอนตามแนวคิดของกลิ๊กแมน เพื่อพัฒนาสมรรถภาพการจัดการเรียนรู้ด้านทักษะการอ่านของครูภาษาไทย. <i>Veridian E-Journal, Silpakorn University, 4</i>(1), 491–512.</p>
+    <p>อังคณา นาสารี, อดินันท์ แก้วนิล, เอกพัฒน์ เฮืองใสส่อง, และวิรุธน์ บัวงาม. (2569). การพัฒนารูปแบบและประเมินประสิทธิผลการนิเทศภายในเพื่อยกระดับคุณภาพการเรียนการสอน กรณีศึกษาโรงเรียนเตรียมอุดมศึกษาพัฒนาการ อุบลราชธานี. <i>วารสารบริหารการศึกษาบัวบัณฑิต, 26</i>(1), 180–195.</p>
+    <p>อภิชาติ เนินพรหม. (2566). การพัฒนากระบวนการนิเทศผสมผสานแบบร่วมพัฒนาเพื่อเสริมสร้างสมรรถนะการจัดการเรียนรู้สำหรับครูผู้สอนอาชีวศึกษา สถานศึกษาประเภทวิทยาลัยการอาชีพ ในพื้นที่ภาคใต้. <i>วารสารวิชาการนวัตกรรมและเทคโนโลยี สถาบันการอาชีวศึกษาภาคใต้ 1, 8</i>(1), 13–22.</p>
+    <p>อลงกรณ์ สุขวัน, ไชยวัฒน์ ชุ่มนาเสียว, ศรีสมพร โคตะคำ, จารุกิตติ์ สายสิงห์, อธิศ ไชยคิรินทร์, ยุทธศาสตร์ กงเพชร, และชาติชาย เกตุพรม. (2567). การพัฒนาภาวะผู้นำทางการนิเทศภายในสถานศึกษาด้วยกระบวนการนิเทศแบบ PIDRE ร่วมกับเทคนิคการสังเกตการสอนเชิงรุกในชั้นเรียนเพื่อเสริมสร้างสมรรถนะการชี้แนะสะท้อนคิดผู้นิเทศ. <i>Journal of Modern Learning Development, 9</i>(2), 380–394.</p>
+    </div>
+    <div>
+    <p>Allen, J., Pianta, R., Gregory, A., Mikami, A., &amp; Lun, J. (2011). An interaction-based approach to enhancing secondary school instruction and student achievement. <i>Science, 333</i>(6045), 1034–1037.</p>
+    <p>Burton, W. H., &amp; Brueckner, L. J. (1955). <i>Supervision: A social process</i> (3rd ed.). Appleton-Century-Crofts.</p>
+    <p>Cogan, M. L. (1973). <i>Clinical supervision</i>. Houghton Mifflin.</p>
+    <p>DuFour, R. (2004). What is a "professional learning community"? <i>Educational Leadership, 61</i>(8), 6–11.</p>
+    <p>Glickman, C. D., &amp; Gordon, S. P. (1987). Clarifying developmental supervision. <i>Educational Leadership, 44</i>(8), 64–68.</p>
+    <p>Glickman, C. D., Gordon, S. P., &amp; Ross-Gordon, J. M. (2009). <i>The basic guide to SuperVision and instructional leadership</i> (2nd ed.). Pearson/Allyn &amp; Bacon.</p>
+    <p>Goldhammer, R. (1969). <i>Clinical supervision: Special methods for the supervision of teachers</i>. Holt, Rinehart and Winston.</p>
+    <p>Harris, B. M. (1985). <i>Supervisory behavior in education</i> (3rd ed.). Prentice-Hall.</p>
+    <p>Hoy, W. K., &amp; Miskel, C. G. (2013). <i>Educational administration: Theory, research, and practice</i> (9th ed.). McGraw-Hill.</p>
+    <p>Inprasitha, M. (2022). Lesson study and open approach development in Thailand: A longitudinal study. <i>International Journal for Lesson and Learning Studies, 11</i>(5), 1–15. https://doi.org/10.1108/IJLLS-04-2021-0029</p>
+    <p>Knowles, M. S. (1980). <i>The modern practice of adult education: From pedagogy to andragogy</i> (Rev. and updated ed.). Cambridge Adult Education.</p>
+    <p>Kraft, M. A., Blazar, D., &amp; Hogan, D. (2018). The effect of teacher coaching on instruction and achievement: A meta-analysis of the causal evidence. <i>Review of Educational Research, 88</i>(4), 547–588. https://doi.org/10.3102/0034654318759268</p>
+    <p>Lewis, C., &amp; Perry, R. (2017). Lesson study to scale up research-based knowledge: A randomized, controlled trial of fractions learning. <i>Journal for Research in Mathematics Education, 48</i>(3), 261–299.</p>
+    <p>Ozyildirim, G., &amp; Bilgin Aksu, M. (2016). An investigation on developmental supervision model: Supervisors' and administrators' opinions and teachers' expectations. <i>International Journal of Academic Research in Business and Social Sciences, 6</i>(3). https://doi.org/10.6007/IJARBSS/v6-i3/2055</p>
+    <p>Schön, D. A. (1983). <i>The reflective practitioner: How professionals think in action</i>. Basic Books.</p>
+    <p>Sergiovanni, T. J. (1967). Factors which affect satisfaction and dissatisfaction of teachers. <i>Journal of Educational Administration, 5</i>(1), 66–82. https://doi.org/10.1108/eb009610</p>
+    <p>Sergiovanni, T. J., &amp; Starratt, R. J. (1998). <i>Supervision: A redefinition</i> (6th ed.). McGraw-Hill.</p>
+    <p>von Bertalanffy, L. (1968). <i>General system theory: Foundations, development, applications</i>. George Braziller.</p>
+    </div>
+  </div>
+  <aside class="notes">
+    <p>บรรณานุกรมตามเอกสารวิชาการกลุ่มที่ 1</p>
+    <p class="ref">ที่มา: เอกสารวิชาการกลุ่มที่ 1 หน้า 11–13</p>
+  </aside>
+</section>
+
+<section class="slide" data-act="A" data-appendix="1" data-time="0" data-title="ผู้จัดทำ">
+  <div class="head"><p class="kicker">กลุ่มที่ 1</p><h2 class="t">ผู้จัดทำ</h2></div>
+  <div class="people fill" style="align-content: center;">
+    <figure class="person"><div class="ph"><img src="img/m1.jpg" alt="นางสาวอังคณา เกิดพุ่ม"></div><figcaption><span class="no">01</span>นางสาวอังคณา เกิดพุ่ม</figcaption></figure>
+    <figure class="person"><div class="ph"><img src="img/m2.jpg" alt="นายณัฐพัฒน์ พาณิชพัฒนกุล"></div><figcaption><span class="no">02</span>นายณัฐพัฒน์ พาณิชพัฒนกุล</figcaption></figure>
+    <figure class="person"><div class="ph"><img src="img/m3.jpg" alt="นายชัยรัตน์ จีนเที่ยง"></div><figcaption><span class="no">03</span>นายชัยรัตน์ จีนเที่ยง</figcaption></figure>
+    <figure class="person"><div class="ph"><img src="img/m4.jpg" alt="นายสุไลมาน มะมิง"></div><figcaption><span class="no">04</span>นายสุไลมาน มะมิง</figcaption></figure>
+    <figure class="person"><div class="ph"><img src="img/m5.jpg" alt="นายเรืองวงศ์ เรืองประดับกุล"></div><figcaption><span class="no">05</span>นายเรืองวงศ์ เรืองประดับกุล</figcaption></figure>
+    <figure class="person"><div class="ph"><img src="img/m6.jpg" alt="นายมะดารี กาโบะ"></div><figcaption><span class="no">06</span>นายมะดารี กาโบะ</figcaption></figure>
+    <figure class="person"><div class="ph"><img src="img/m7.jpg" alt="นางมารียะห์ กาโบะ"></div><figcaption><span class="no">07</span>นางมารียะห์ กาโบะ</figcaption></figure>
+    <figure class="person"><div class="ph"><img src="img/m8.jpg" alt="นางสาวมาชีเตาห์ กานิง"></div><figcaption><span class="no">08</span>นางสาวมาชีเตาห์ กานิง</figcaption></figure>
+  </div>
+  <div class="row" style="justify-content: space-between; flex-wrap: wrap; gap: 1rem; border-top: 2px solid var(--green); padding-top: 1.1rem; font-size: 1.25rem;">
+    <span><b style="color: var(--deep);">เสนอ</b>&nbsp; ผู้ช่วยศาสตราจารย์ ดร.ซัมซู สาอุ &nbsp;·&nbsp; ดร.อิสะมะแอ มะเระ</span>
+    <span class="mute">คณะศิลปศาสตร์และศึกษาศาสตร์ สถาบันรัชต์ภาคย์ · ปีการศึกษา 2569</span>
+  </div>
+  <aside class="notes">
+    <p>รายชื่อผู้จัดทำและอาจารย์ผู้สอนตามหน้าปกเอกสารวิชาการกลุ่มที่ 1</p>
+  </aside>
+</section>
+
+      <div class="chrome-bot" aria-hidden="true">
+        <span>แนวคิด ทฤษฎี หลักการ และระบบการนิเทศการศึกษา</span>
+        <span class="pg" id="pg"></span>
+      </div>
+    </div>
+  </div>
+
+  <aside class="notes-panel" id="notesPanel" hidden aria-label="โน้ตผู้พูด">
+    <div class="np-head">
+      <p class="np-title" id="npTitle"></p>
+      <div class="np-meta" id="npMeta"></div>
+      <div class="np-timer">
+        <span class="clock" id="npClock">00:00</span>
+        <span class="chip" id="npStatus">ยังไม่เริ่มจับเวลา</span>
+        <button class="btn" type="button" id="npStart">เริ่มจับเวลา</button>
+        <button class="btn" type="button" id="npReset">ตั้งเวลาใหม่</button>
+      </div>
+    </div>
+    <div class="np-body" id="npBody"></div>
+  </aside>
+
+  <nav class="controls" aria-label="ควบคุมงานนำเสนอ">
+    <button class="btn" type="button" id="prev" aria-label="สไลด์ก่อนหน้า">◀</button>
+    <span class="counter" id="counter" aria-live="polite"></span>
+    <button class="btn" type="button" id="next" aria-label="สไลด์ถัดไป">▶</button>
+    <button class="btn back-btn" type="button" id="backBtn" hidden></button>
+    <div class="progress" aria-hidden="true"><i id="prog"></i></div>
+    <button class="btn" type="button" id="tOverview"><span class="lbl">ภาพรวม</span><span aria-hidden="true" class="ico">▦</span> <kbd>O</kbd></button>
+    <button class="btn" type="button" id="tNotes" aria-pressed="false"><span class="lbl">โน้ตผู้พูด</span><span aria-hidden="true">✎</span> <kbd>N</kbd></button>
+    <button class="btn" type="button" id="tScript"><span class="lbl">บทพูดทั้งหมด</span><span aria-hidden="true">☰</span> <kbd>S</kbd></button>
+    <button class="btn" type="button" id="tTimer" aria-pressed="false"><span class="clock" id="barClock">00:00</span> <kbd>T</kbd></button>
+    <button class="btn" type="button" id="tFull"><span class="lbl">เต็มจอ</span><span aria-hidden="true">⛶</span> <kbd>F</kbd></button>
+  </nav>
+</div>
+
+<div class="overlay" id="overview" hidden>
+  <div class="ov-inner">
+    <div class="ov-top"><h2>ภาพรวมสไลด์</h2><button class="btn" type="button" data-close>ปิด <kbd>Esc</kbd></button></div>
+    <div id="ovList" style="display: flex; flex-direction: column; gap: 1.4rem;"></div>
+  </div>
+</div>
+
+<div class="overlay" id="script" hidden>
+  <div class="ov-inner">
+    <div class="ov-top"><h2>บทพูดทั้งหมด · 60 นาที</h2><button class="btn" type="button" data-close>ปิด <kbd>Esc</kbd></button></div>
+    <div id="scList" style="display: flex; flex-direction: column; gap: 1rem;"></div>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var $ = function (s) { return document.querySelector(s); };
+  var stage = $("#stage"), viewport = $("#viewport");
+  var slides = Array.prototype.slice.call(document.querySelectorAll(".slide"));
+  var N = slides.length;
+  var ACTS = {
+    I: "Act I · Opening Hook",
+    II: "Act II · Theory",
+    III: "Act III · Practice",
+    IV: "Act IV · Problem",
+    V: "Act V · Innovation",
+    VI: "Act VI · Closing",
+    A: "ภาคผนวก"
+  };
+  var ACT_TH = {
+    I: "ACT I: Opening Hook (4 นาที)",
+    II: "ACT II: Theory — แนวคิด ทฤษฎี หลักการ และระบบ (19 นาที)",
+    III: "ACT III: Practice — กรณีศึกษาจริง (11 นาที)",
+    IV: "ACT IV: Problem — วิเคราะห์ปัญหา (8 นาที)",
+    V: "ACT V: Innovation — แบบจำลอง PIDRE-D (15 นาที)",
+    VI: "ACT VI: Closing — สังเคราะห์บทเรียน (3 นาที)",
+    A: "ภาคผนวก: ถาม-ตอบและอภิปราย (30 นาที)"
+  };
+  var PARTS = ["theory", "practice", "problem", "innovation"];
+
+  /* ---------- planned timing ---------- */
+  var acc = 0;
+  var plan = slides.map(function (s) {
+    var t = parseFloat(s.dataset.time || "0");
+    var main = !s.dataset.appendix;
+    var start = acc;
+    if (main) acc += t;
+    return { t: t, start: start, end: main ? acc : start, main: main };
+  });
+  var TOTAL = acc;
+  function mmss(sec) {
+    sec = Math.max(0, Math.round(sec));
+    var m = Math.floor(sec / 60), s = sec % 60;
+    return (m < 10 ? "0" : "") + m + ":" + (s < 10 ? "0" : "") + s;
+  }
+  function pad2(n) { return (n < 10 ? "0" : "") + n; }
+  function minLabel(t) { return (Math.round(t * 10) / 10).toString().replace(".5", ".5") + " นาที"; }
+
+  /* ---------- build generated pieces ---------- */
+  var dots = $("#dots105");
+  if (dots) for (var d = 0; d < 105; d++) { var i = document.createElement("i"); if (d >= 103) i.className = "off"; dots.appendChild(i); }
+
+  var weeks = $("#weeks");
+  if (weeks) {
+    var h = '<span style="grid-row: 1; grid-column: 1;"></span>';
+    for (var w = 1; w <= 18; w++) h += '<span class="wk" style="grid-row: 1; grid-column: ' + (w + 1) + ';">' + w + "</span>";
+    h += '<span class="gap15" style="grid-row: 2 / span 3; grid-column: 16;"></span>';
+    h += '<span class="lab" style="grid-row: 2; grid-column: 1;">P + I</span><div class="bar" style="grid-row: 2; grid-column: 2 / span 2;">1–2</div>';
+    h += '<span class="lab" style="grid-row: 3; grid-column: 1;">D</span><div class="bar" style="grid-row: 3; grid-column: 4 / span 12;">3–14</div>';
+    h += '<span class="lab" style="grid-row: 4; grid-column: 1;">E</span><div class="bar l" style="grid-row: 4; grid-column: 17 / span 3;">16–18</div>';
+    weeks.innerHTML = h;
+  }
+
+  /* ---------- fit stage ---------- */
+  var narrow = window.matchMedia("(max-width: 760px)");
+  function fit() {
+    if (narrow.matches) { stage.style.removeProperty("--s"); return; }
+    var r = viewport.getBoundingClientRect();
+    var s = Math.min(r.width / 1600, r.height / 900) * 0.985;
+    stage.style.setProperty("--s", String(s));
+  }
+  if (window.ResizeObserver) new ResizeObserver(fit).observe(viewport);
+  window.addEventListener("resize", fit);
+
+  /* ---------- navigation ---------- */
+  var cur = -1, backTo = null;
+  var counter = $("#counter"), prog = $("#prog"), actLabel = $("#actLabel"), pg = $("#pg");
+  var railItems = Array.prototype.slice.call(document.querySelectorAll("#rail span"));
+  function go(i, opts) {
+    opts = opts || {};
+    i = Math.max(0, Math.min(N - 1, i));
+    if (i === cur) return;
+    if (cur >= 0) slides[cur].classList.remove("active");
+    cur = i;
+    var s = slides[cur];
+    s.classList.add("active");
+    stage.classList.toggle("bare", s.classList.contains("cover"));
+    actLabel.textContent = ACTS[s.dataset.act] || "";
+    var part = s.dataset.part, pi = PARTS.indexOf(part);
+    var act = s.dataset.act;
+    railItems.forEach(function (el, k) {
+      el.classList.remove("now", "done");
+      if (act === "VI" || act === "A") el.classList.add("done");
+      else if (pi >= 0) { if (k < pi) el.classList.add("done"); if (k === pi) el.classList.add("now"); }
+    });
+    pg.textContent = pad2(cur + 1) + " / " + N;
+    counter.textContent = pad2(cur + 1) + " / " + N;
+    prog.style.width = ((cur + 1) / N * 100) + "%";
+    if (backTo !== null && (cur === backTo)) { backTo = null; }
+    renderBack();
+    renderNotes();
+    if (!opts.noHash) {
+      try { history.replaceState(null, "", "#s" + (cur + 1)); } catch (e) {}
+    }
+    var ovItems = document.querySelectorAll(".ov-item");
+    for (var k = 0; k < ovItems.length; k++) ovItems[k].classList.toggle("cur", k === cur);
+  }
+  function next() { go(cur + 1); }
+  function prev() { go(cur - 1); }
+  $("#next").addEventListener("click", next);
+  $("#prev").addEventListener("click", prev);
+
+  var backBtn = $("#backBtn");
+  function renderBack() {
+    if (backTo === null) { backBtn.hidden = true; return; }
+    backBtn.hidden = false;
+    backBtn.textContent = "↩ กลับสไลด์ " + pad2(backTo + 1);
+  }
+  backBtn.addEventListener("click", function () { if (backTo !== null) go(backTo); });
+
+  /* ---------- discussion questions ---------- */
+  var qs = $("#qs");
+  function focusQ(n) {
+    var items = qs.querySelectorAll("li");
+    var target = qs.querySelector('li[data-q="' + n + '"]');
+    var turningOff = target && target.classList.contains("on");
+    for (var k = 0; k < items.length; k++) items[k].classList.remove("on");
+    if (target && !turningOff) { target.classList.add("on"); qs.classList.add("focusing"); }
+    else qs.classList.remove("focusing");
+  }
+  if (qs) qs.addEventListener("click", function (e) {
+    var j = e.target.closest(".jump");
+    if (j) { e.stopPropagation(); backTo = cur; go(parseInt(j.dataset.go, 10) - 1); return; }
+    var li = e.target.closest("li");
+    if (li) focusQ(li.dataset.q);
+  });
+
+  /* ---------- timer ---------- */
+  var running = false, startedAt = 0, accMs = 0, tick = null, wake = null;
+  function elapsedSec() { return (accMs + (running ? Date.now() - startedAt : 0)) / 1000; }
+  function statusFor(sec) {
+    var p = plan[cur];
+    if (!p || !p.main) return { text: "ช่วงภาคผนวก · แผนหลัก " + TOTAL + " นาที", warn: sec > TOTAL * 60 };
+    var a = p.start * 60, b = p.end * 60;
+    if (!running && sec === 0) return { text: "ยังไม่เริ่มจับเวลา", warn: false };
+    if (sec < a) return { text: "เร็วกว่าแผน " + mmss(a - sec), warn: false };
+    if (sec > b) return { text: "ช้ากว่าแผน " + mmss(sec - b), warn: true };
+    return { text: "ตรงตามแผน", warn: false };
+  }
+  function renderClock() {
+    var sec = elapsedSec();
+    var t = mmss(sec);
+    $("#barClock").textContent = t;
+    $("#npClock").textContent = t;
+    var st = statusFor(sec);
+    var el = $("#npStatus");
+    el.textContent = st.text;
+    el.className = "chip" + (st.warn ? " warn" : "");
+    $("#tTimer").setAttribute("aria-pressed", running ? "true" : "false");
+    $("#npStart").textContent = running ? "หยุดชั่วคราว" : (sec > 0 ? "จับเวลาต่อ" : "เริ่มจับเวลา");
+  }
+  function toggleTimer() {
+    if (running) { accMs += Date.now() - startedAt; running = false; clearInterval(tick); releaseWake(); }
+    else { startedAt = Date.now(); running = true; tick = setInterval(renderClock, 500); requestWake(); }
+    renderClock();
+  }
+  function resetTimer() { running = false; clearInterval(tick); accMs = 0; releaseWake(); renderClock(); }
+  function requestWake() {
+    try { if (navigator.wakeLock) navigator.wakeLock.request("screen").then(function (l) { wake = l; }).catch(function () {}); } catch (e) {}
+  }
+  function releaseWake() { try { if (wake) wake.release(); } catch (e) {} wake = null; }
+  $("#tTimer").addEventListener("click", toggleTimer);
+  $("#npStart").addEventListener("click", toggleTimer);
+  $("#npReset").addEventListener("click", resetTimer);
+
+  /* ---------- notes ---------- */
+  var panel = $("#notesPanel");
+  function metaHtml(k) {
+    var p = plan[k], s = slides[k];
+    var parts = ['<span class="chip">สไลด์ ' + pad2(k + 1) + " จาก " + N + "</span>"];
+    if (p.t) parts.push('<span class="chip">' + minLabel(p.t) + "</span>");
+    if (p.main) parts.push('<span class="chip">ตามแผน ' + mmss(p.start * 60) + "–" + mmss(p.end * 60) + "</span>");
+    parts.push('<span class="chip">' + (ACTS[s.dataset.act] || "") + "</span>");
+    return parts.join("");
+  }
+  function renderNotes() {
+    if (cur < 0) return;
+    var s = slides[cur];
+    $("#npTitle").textContent = s.dataset.title || "";
+    $("#npMeta").innerHTML = metaHtml(cur);
+    var n = s.querySelector("aside.notes");
+    $("#npBody").innerHTML = n ? n.innerHTML : "";
+    $("#npBody").scrollTop = 0;
+    renderClock();
+  }
+  function toggleNotes(force) {
+    var open = typeof force === "boolean" ? force : panel.hidden;
+    panel.hidden = !open;
+    $("#tNotes").setAttribute("aria-pressed", open ? "true" : "false");
+    try { localStorage.setItem("ed518-notes", open ? "1" : "0"); } catch (e) {}
+    requestAnimationFrame(fit);
+  }
+  $("#tNotes").addEventListener("click", function () { toggleNotes(); });
+
+  /* ---------- overview & script ---------- */
+  var ovList = $("#ovList"), scList = $("#scList");
+  var groups = {}, order = [];
+  slides.forEach(function (s, k) {
+    var a = s.dataset.act;
+    if (!groups[a]) { groups[a] = []; order.push(a); }
+    groups[a].push(k);
+  });
+  order.forEach(function (a) {
+    var sec = document.createElement("div");
+    sec.className = "ov-act";
+    var h3 = document.createElement("h3"); h3.textContent = ACT_TH[a]; sec.appendChild(h3);
+    var grid = document.createElement("div"); grid.className = "ov-grid";
+    groups[a].forEach(function (k) {
+      var b = document.createElement("button");
+      b.type = "button"; b.className = "ov-item";
+      b.innerHTML = '<span class="no">' + pad2(k + 1) + "</span><span></span>";
+      b.lastChild.textContent = slides[k].dataset.title;
+      if (plan[k].t) { var sm = document.createElement("small"); sm.textContent = minLabel(plan[k].t); b.lastChild.appendChild(sm); }
+      b.addEventListener("click", function () { closeOverlays(); go(k); });
+      grid.appendChild(b);
+    });
+    sec.appendChild(grid);
+    ovList.appendChild(sec);
+  });
+  slides.forEach(function (s, k) {
+    var it = document.createElement("article");
+    it.className = "sc-item";
+    var h3 = document.createElement("h3"); h3.textContent = pad2(k + 1) + " · " + s.dataset.title;
+    var meta = document.createElement("div"); meta.className = "np-meta"; meta.innerHTML = metaHtml(k);
+    var jb = document.createElement("button"); jb.type = "button"; jb.className = "jump"; jb.textContent = "ไปที่สไลด์นี้";
+    jb.addEventListener("click", function () { closeOverlays(); go(k); });
+    meta.appendChild(jb);
+    var body = document.createElement("div"); body.className = "body";
+    var n = s.querySelector("aside.notes"); body.innerHTML = n ? n.innerHTML : "";
+    it.appendChild(h3); it.appendChild(meta); it.appendChild(body);
+    scList.appendChild(it);
+  });
+  var ov = $("#overview"), sc = $("#script");
+  function closeOverlays() { ov.hidden = true; sc.hidden = true; }
+  function openOverview() { sc.hidden = true; ov.hidden = false; var c = ov.querySelector(".ov-item.cur"); if (c) c.focus(); }
+  function openScript() { ov.hidden = true; sc.hidden = false; }
+  $("#tOverview").addEventListener("click", openOverview);
+  $("#tScript").addEventListener("click", openScript);
+  Array.prototype.forEach.call(document.querySelectorAll("[data-close]"), function (b) { b.addEventListener("click", closeOverlays); });
+
+  /* ---------- fullscreen ---------- */
+  function toggleFull() {
+    try {
+      if (document.fullscreenElement) document.exitFullscreen().catch(function () {});
+      else if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(function () {});
+    } catch (e) {}
+  }
+  $("#tFull").addEventListener("click", toggleFull);
+
+  /* ---------- keyboard & touch ---------- */
+  document.addEventListener("keydown", function (e) {
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    var k = e.key;
+    if (k === "Escape") { if (!ov.hidden || !sc.hidden) { closeOverlays(); e.preventDefault(); } return; }
+    if (!ov.hidden || !sc.hidden) { if (k === "o" || k === "O" || k === "s" || k === "S") { closeOverlays(); e.preventDefault(); } return; }
+    if (k === "ArrowRight" || k === "PageDown" || k === " " || k === "Enter") { next(); e.preventDefault(); }
+    else if (k === "ArrowLeft" || k === "PageUp" || k === "Backspace") { prev(); e.preventDefault(); }
+    else if (k === "Home") { go(0); e.preventDefault(); }
+    else if (k === "End") { go(N - 1); e.preventDefault(); }
+    else if (k === "n" || k === "N") toggleNotes();
+    else if (k === "o" || k === "O") openOverview();
+    else if (k === "s" || k === "S") openScript();
+    else if (k === "t" || k === "T") toggleTimer();
+    else if (k === "f" || k === "F") toggleFull();
+    else if (/^[1-5]$/.test(k) && qs && slides[cur].contains(qs)) focusQ(k);
+  });
+  var tx = null, ty = null;
+  viewport.addEventListener("touchstart", function (e) { var t = e.touches[0]; tx = t.clientX; ty = t.clientY; }, { passive: true });
+  viewport.addEventListener("touchend", function (e) {
+    if (tx === null) return;
+    var t = e.changedTouches[0], dx = t.clientX - tx, dy = t.clientY - ty;
+    if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) { if (dx < 0) next(); else prev(); if (narrow.matches) window.scrollTo(0, 0); }
+    tx = ty = null;
+  }, { passive: true });
+
+  /* ---------- hash ---------- */
+  function fromHash() {
+    var h = location.hash || "";
+    var m = /^#s(\d+)$/.exec(h);
+    if (m) go(parseInt(m[1], 10) - 1, { noHash: true });
+    else if (h === "#script") { if (cur < 0) go(0, { noHash: true }); openScript(); }
+    else if (cur < 0) go(0, { noHash: true });
+  }
+  window.addEventListener("hashchange", fromHash);
+
+  fromHash();
+  try { if (localStorage.getItem("ed518-notes") === "1" && !narrow.matches) toggleNotes(true); } catch (e) {}
+  fit();
+  renderClock();
+})();
+</script>
+</body>
+</html>
